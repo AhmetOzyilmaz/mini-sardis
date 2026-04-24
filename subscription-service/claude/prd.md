@@ -2,7 +2,7 @@
 # Subscription Management System – PRD
 
 > **Versiyon / Version:** 1.0 | **Tarih / Date:** 2026-04-24 | **Durum / Status:** Draft  
-> **Yazar / Author:** Ahmet Özyılmaz | **Proje / Project:** mini-sardis / advance
+> **Yazar / Author:** Ahmet Özyılmaz | **Proje / Project:** mini-sardis / subscription-service
 
 ---
 

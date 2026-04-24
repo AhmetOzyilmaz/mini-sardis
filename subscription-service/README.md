@@ -364,4 +364,4 @@ curl http://localhost:8080/api/v1/subscriptions/sub-uuid \
 
 ---
 
-> Author: Ahmet Özyılmaz · mini-sardis / advance
+> Author: Ahmet Özyılmaz · mini-sardis / subscription-service

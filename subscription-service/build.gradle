@@ -7,7 +7,7 @@ plugins {
 
 group = 'com.ahmet.ai'
 version = '0.0.1-SNAPSHOT'
-description = 'advance'
+description = 'subscription-service'
 
 java {
     toolchain {

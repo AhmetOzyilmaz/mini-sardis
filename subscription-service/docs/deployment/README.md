@@ -37,7 +37,7 @@
 ```bash
 # Clone the repository
 git clone <repo-url>
-cd mini-sardis/advance
+cd mini-sardis/subscription-service
 
 # Build and start all services
 docker-compose up --build
