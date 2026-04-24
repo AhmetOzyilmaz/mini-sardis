@@ -1,0 +1,28 @@
+global:
+  scrape_interval:     15s   # how often Prometheus scrapes each target
+  evaluation_interval: 15s   # how often rules are evaluated
+
+scrape_configs:
+
+  # ── Subscription Service ────────────────────────────────────────────────────
+  - job_name: subscription-service
+    static_configs:
+      - targets: ['subscription-service:8080']
+    metrics_path: /actuator/prometheus
+
+  # ── Payment Service ─────────────────────────────────────────────────────────
+  - job_name: payment-service
+    static_configs:
+      - targets: ['payment-service:8081']
+    metrics_path: /actuator/prometheus
+
+  # ── Notification Service ─────────────────────────────────────────────────────
+  - job_name: notification-service
+    static_configs:
+      - targets: ['notification-service:8082']
+    metrics_path: /actuator/prometheus
+
+  # ── Prometheus self-monitoring ───────────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
