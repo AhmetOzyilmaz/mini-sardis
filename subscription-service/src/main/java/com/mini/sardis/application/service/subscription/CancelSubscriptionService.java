@@ -8,6 +8,7 @@ import com.mini.sardis.application.port.out.OutboxRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
 import com.mini.sardis.domain.entity.OutboxEvent;
 import com.mini.sardis.domain.entity.Subscription;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,19 +17,12 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class CancelSubscriptionService implements CancelSubscriptionUseCase {
 
     private final SubscriptionRepositoryPort subscriptionRepo;
     private final OutboxRepositoryPort outboxRepo;
     private final ObjectMapper objectMapper;
-
-    public CancelSubscriptionService(SubscriptionRepositoryPort subscriptionRepo,
-                                     OutboxRepositoryPort outboxRepo,
-                                     ObjectMapper objectMapper) {
-        this.subscriptionRepo = subscriptionRepo;
-        this.outboxRepo = outboxRepo;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     @Transactional

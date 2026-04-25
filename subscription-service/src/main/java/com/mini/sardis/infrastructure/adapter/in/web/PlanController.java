@@ -5,6 +5,7 @@ import com.mini.sardis.application.port.in.plan.PlanResult;
 import com.mini.sardis.infrastructure.adapter.in.web.dto.PlanResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,13 +15,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/plans")
 @Tag(name = "Plans", description = "Subscription plan catalog (public)")
+@RequiredArgsConstructor
 public class PlanController {
 
     private final GetPlansUseCase getPlansUseCase;
-
-    public PlanController(GetPlansUseCase getPlansUseCase) {
-        this.getPlansUseCase = getPlansUseCase;
-    }
 
     @Operation(summary = "List all active subscription plans")
     @GetMapping

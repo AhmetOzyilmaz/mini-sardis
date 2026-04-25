@@ -5,6 +5,7 @@ import com.mini.sardis.domain.value.DiscountType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 public record PromoCodeResponse(
@@ -16,12 +17,13 @@ public record PromoCodeResponse(
         int currentUses,
         boolean active,
         LocalDateTime validFrom,
-        LocalDateTime validTo
+        LocalDateTime validTo,
+        Set<Integer> applicableMonths
 ) {
     public static PromoCodeResponse from(PromoCode p) {
         return new PromoCodeResponse(
                 p.getId(), p.getCode(), p.getDiscountType(), p.getDiscountValue(),
                 p.getMaxUses(), p.getCurrentUses(), p.isActive(),
-                p.getValidFrom(), p.getValidTo());
+                p.getValidFrom(), p.getValidTo(), p.getApplicableMonths());
     }
 }

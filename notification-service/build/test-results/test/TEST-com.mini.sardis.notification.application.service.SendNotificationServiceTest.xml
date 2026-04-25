@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.mini.sardis.notification.application.service.SendNotificationServiceTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-04-25T21:01:37.613Z" hostname="DESKTOP-MFFJA06" time="2.888">
+  <properties/>
+  <testcase name="failedSend_logsFailure()" classname="com.mini.sardis.notification.application.service.SendNotificationServiceTest" time="2.775"/>
+  <testcase name="unknownChannel_doesNothing()" classname="com.mini.sardis.notification.application.service.SendNotificationServiceTest" time="0.025"/>
+  <testcase name="smsNotification_routesToSmsSender()" classname="com.mini.sardis.notification.application.service.SendNotificationServiceTest" time="0.032"/>
+  <testcase name="emailNotification_routesToEmailSenderAndLogsResult()" classname="com.mini.sardis.notification.application.service.SendNotificationServiceTest" time="0.041"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

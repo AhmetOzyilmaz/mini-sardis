@@ -15,6 +15,7 @@ import com.mini.sardis.domain.entity.OutboxEvent;
 import com.mini.sardis.domain.entity.PromoCode;
 import com.mini.sardis.domain.entity.Subscription;
 import com.mini.sardis.domain.entity.SubscriptionPlan;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class CreateSubscriptionService implements CreateSubscriptionUseCase {
 
     private final SubscriptionRepositoryPort subscriptionRepo;
@@ -30,18 +32,6 @@ public class CreateSubscriptionService implements CreateSubscriptionUseCase {
     private final OutboxRepositoryPort outboxRepo;
     private final ObjectMapper objectMapper;
     private final PromoCodeRepositoryPort promoCodeRepo;
-
-    public CreateSubscriptionService(SubscriptionRepositoryPort subscriptionRepo,
-                                     SubscriptionPlanRepositoryPort planRepo,
-                                     OutboxRepositoryPort outboxRepo,
-                                     ObjectMapper objectMapper,
-                                     PromoCodeRepositoryPort promoCodeRepo) {
-        this.subscriptionRepo = subscriptionRepo;
-        this.planRepo = planRepo;
-        this.outboxRepo = outboxRepo;
-        this.objectMapper = objectMapper;
-        this.promoCodeRepo = promoCodeRepo;
-    }
 
     @Override
     @Transactional
@@ -54,11 +44,13 @@ public class CreateSubscriptionService implements CreateSubscriptionUseCase {
         String currency = plan.getPrice().getCurrency();
 
         Subscription subscription;
+        int durationMonths = Math.max(1, (int) Math.round(plan.getDurationDays() / 30.0));
+
         if (command.promoCode() != null && !command.promoCode().isBlank()) {
             PromoCode promo = promoCodeRepo.findByCode(command.promoCode().toUpperCase())
                     .orElseThrow(() -> new InvalidPromoCodeException(
                             "Promo code '" + command.promoCode() + "' not found"));
-            promo.validate();
+            promo.validate(durationMonths);
             BigDecimal discount = promo.calculateDiscountAmount(price);
             promo.incrementUse();
             promoCodeRepo.save(promo);
@@ -72,13 +64,13 @@ public class CreateSubscriptionService implements CreateSubscriptionUseCase {
 
         OutboxEvent event = OutboxEvent.create(
                 saved.getId(), "Subscription", "subscription.created.v1",
-                buildPayload(saved, plan));
+                buildPayload(saved, plan, command));
         outboxRepo.save(event);
 
         return toResult(saved);
     }
 
-    private String buildPayload(Subscription s, SubscriptionPlan plan) {
+    private String buildPayload(Subscription s, SubscriptionPlan plan, CreateSubscriptionCommand command) {
         try {
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("subscriptionId", s.getId().toString());
@@ -90,7 +82,11 @@ public class CreateSubscriptionService implements CreateSubscriptionUseCase {
             payload.put("discountAmount", s.getDiscountAmount());
             payload.put("finalAmount", s.getFinalAmount());
             payload.put("durationDays", plan.getDurationDays());
+            payload.put("durationMonths", Math.max(1, (int) Math.round(plan.getDurationDays() / 30.0)));
             payload.put("idempotencyKey", s.getId().toString());
+            if (command.paymentMethod() != null && !command.paymentMethod().isBlank()) {
+                payload.put("paymentMethod", command.paymentMethod());
+            }
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize outbox payload", e);

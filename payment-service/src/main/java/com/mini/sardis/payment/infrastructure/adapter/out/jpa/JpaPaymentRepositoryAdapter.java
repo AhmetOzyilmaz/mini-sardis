@@ -2,6 +2,7 @@ package com.mini.sardis.payment.infrastructure.adapter.out.jpa;
 
 import com.mini.sardis.payment.application.port.out.PaymentRepositoryPort;
 import com.mini.sardis.payment.domain.entity.Payment;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -9,13 +10,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class JpaPaymentRepositoryAdapter implements PaymentRepositoryPort {
 
     private final JpaPaymentRepository jpaRepo;
-
-    public JpaPaymentRepositoryAdapter(JpaPaymentRepository jpaRepo) {
-        this.jpaRepo = jpaRepo;
-    }
 
     @Override
     public Payment save(Payment payment) {
@@ -42,6 +40,7 @@ public class JpaPaymentRepositoryAdapter implements PaymentRepositoryPort {
                 .currency(p.getCurrency())
                 .status(p.getStatus())
                 .type(p.getType())
+                .paymentMethod(p.getPaymentMethod())
                 .externalRef(p.getExternalRef())
                 .failureReason(p.getFailureReason())
                 .retryCount(p.getRetryCount())
@@ -60,6 +59,7 @@ public class JpaPaymentRepositoryAdapter implements PaymentRepositoryPort {
                 .currency(e.getCurrency())
                 .status(e.getStatus())
                 .type(e.getType())
+                .paymentMethod(e.getPaymentMethod())
                 .externalRef(e.getExternalRef())
                 .failureReason(e.getFailureReason())
                 .retryCount(e.getRetryCount())

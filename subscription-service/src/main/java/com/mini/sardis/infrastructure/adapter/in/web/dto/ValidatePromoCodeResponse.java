@@ -4,6 +4,7 @@ import com.mini.sardis.application.port.in.promo.ValidatePromoCodeQuery;
 import com.mini.sardis.domain.value.DiscountType;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 public record ValidatePromoCodeResponse(
         String code,
@@ -12,11 +13,12 @@ public record ValidatePromoCodeResponse(
         Integer maxUses,
         int currentUses,
         boolean valid,
-        String message
+        String message,
+        Set<Integer> applicableMonths
 ) {
     public static ValidatePromoCodeResponse from(ValidatePromoCodeQuery q) {
         return new ValidatePromoCodeResponse(
                 q.code(), q.discountType(), q.discountValue(),
-                q.maxUses(), q.currentUses(), q.valid(), q.message());
+                q.maxUses(), q.currentUses(), q.valid(), q.message(), q.applicableMonths());
     }
 }

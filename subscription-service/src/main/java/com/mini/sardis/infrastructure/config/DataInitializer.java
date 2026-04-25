@@ -3,8 +3,7 @@ package com.mini.sardis.infrastructure.config;
 import com.mini.sardis.application.port.out.UserRepositoryPort;
 import com.mini.sardis.domain.entity.User;
 import com.mini.sardis.domain.value.UserRole;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
@@ -14,11 +13,10 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Component
 @Profile({"dev", "default"})
 public class DataInitializer implements ApplicationRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserRepositoryPort userRepository;
     private final PasswordEncoder passwordEncoder;

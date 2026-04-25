@@ -1,5 +1,6 @@
 package com.mini.sardis.payment.infrastructure.adapter.out.jpa;
 
+import com.mini.sardis.payment.domain.value.PaymentMethod;
 import com.mini.sardis.payment.domain.value.PaymentStatus;
 import com.mini.sardis.payment.domain.value.PaymentType;
 import jakarta.persistence.*;
@@ -39,6 +40,10 @@ public class PaymentJpaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PaymentType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false, length = 20)
+    private PaymentMethod paymentMethod;
 
     @Column(name = "external_ref", length = 255)
     private String externalRef;

@@ -35,6 +35,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.kafka:spring-kafka-test'
     testCompileOnly 'org.projectlombok:lombok'
+    testCompileOnly 'com.github.spotbugs:spotbugs-annotations:4.9.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
 }

@@ -30,8 +30,8 @@ class SendNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        //when(emailSender.channel()).thenReturn(NotificationChannel.EMAIL);
-        //when(smsSender.channel()).thenReturn(NotificationChannel.SMS);
+        lenient().when(emailSender.channel()).thenReturn(NotificationChannel.EMAIL);
+        lenient().when(smsSender.channel()).thenReturn(NotificationChannel.SMS);
         service = new SendNotificationService(List.of(emailSender, smsSender), notificationRepo);
     }
 

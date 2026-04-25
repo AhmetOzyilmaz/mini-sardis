@@ -9,33 +9,23 @@ import com.mini.sardis.application.port.out.SubscriptionPlanRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
 import com.mini.sardis.domain.entity.OutboxEvent;
 import com.mini.sardis.domain.entity.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ActivateSubscriptionService implements ActivateSubscriptionUseCase {
-
-    private static final Logger log = LoggerFactory.getLogger(ActivateSubscriptionService.class);
 
     private final SubscriptionRepositoryPort subscriptionRepo;
     private final SubscriptionPlanRepositoryPort planRepo;
     private final OutboxRepositoryPort outboxRepo;
     private final ObjectMapper objectMapper;
-
-    public ActivateSubscriptionService(SubscriptionRepositoryPort subscriptionRepo,
-                                       SubscriptionPlanRepositoryPort planRepo,
-                                       OutboxRepositoryPort outboxRepo,
-                                       ObjectMapper objectMapper) {
-        this.subscriptionRepo = subscriptionRepo;
-        this.planRepo = planRepo;
-        this.outboxRepo = outboxRepo;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     @Transactional

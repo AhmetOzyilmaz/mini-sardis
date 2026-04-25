@@ -7,8 +7,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -16,10 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class JwtTokenProvider implements TokenGeneratorPort {
-
-    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_ROLE = "role";

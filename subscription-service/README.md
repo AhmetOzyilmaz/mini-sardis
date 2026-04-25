@@ -343,7 +343,7 @@ curl http://localhost:8080/api/v1/subscriptions/sub-uuid \
 
 | Document | Location |
 |---|---|
-| Product Requirements (PRD) | [`claude/prd.md`](claude/prd.md) |
+| Product Requirements (PRD) | [`claude/prd.md`](../claude/prd.md) |
 | Architecture Decision Records | [`docs/architecture/ADR.md`](docs/architecture/ADR.md) |
 | Subscription Service Design | [`docs/subscription-service/README.md`](docs/subscription-service/README.md) |
 | Payment Service Design | [`docs/payment-service/README.md`](docs/payment-service/README.md) |

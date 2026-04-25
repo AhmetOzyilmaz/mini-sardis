@@ -1,7 +1,6 @@
 package com.mini.sardis.common.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,9 +13,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
+@Slf4j
 public class WebhookSignatureVerifier {
 
-    private static final Logger log = LoggerFactory.getLogger(WebhookSignatureVerifier.class);
     private static final String HMAC_ALGORITHM = "HmacSHA256";
 
     @Value("${app.webhook.secret:dev-webhook-secret-key}")

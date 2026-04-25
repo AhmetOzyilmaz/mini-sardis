@@ -1,10 +1,12 @@
 package com.mini.sardis.domain.entity;
 
 import com.mini.sardis.domain.value.UserRole;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class User {
 
     private final UUID id;
@@ -41,16 +43,6 @@ public class User {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
-
-    public UUID getId() { return id; }
-    public String getEmail() { return email; }
-    public String getFullName() { return fullName; }
-    public String getPhoneNumber() { return phoneNumber; }
-    public String getPasswordHash() { return passwordHash; }
-    public UserRole getRole() { return role; }
-    public boolean isActive() { return active; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
 
     public static Builder builder() { return new Builder(); }
 

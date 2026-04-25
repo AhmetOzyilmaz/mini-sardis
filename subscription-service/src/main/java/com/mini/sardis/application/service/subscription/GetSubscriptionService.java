@@ -5,6 +5,7 @@ import com.mini.sardis.application.port.in.subscription.GetSubscriptionUseCase;
 import com.mini.sardis.application.port.in.subscription.SubscriptionResult;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
 import com.mini.sardis.domain.entity.Subscription;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,13 +13,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class GetSubscriptionService implements GetSubscriptionUseCase {
 
     private final SubscriptionRepositoryPort subscriptionRepo;
-
-    public GetSubscriptionService(SubscriptionRepositoryPort subscriptionRepo) {
-        this.subscriptionRepo = subscriptionRepo;
-    }
 
     @Override
     @Transactional(readOnly = true)

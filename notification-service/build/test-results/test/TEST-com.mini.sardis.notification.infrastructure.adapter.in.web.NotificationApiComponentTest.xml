@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-04-25T21:01:40.992Z" hostname="DESKTOP-MFFJA06" time="28.636">
+  <properties/>
+  <testcase name="getByUser_returnsNotificationsForUser()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="2.01"/>
+  <testcase name="getByUser_emailAndSms_bothReturned()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="0.175"/>
+  <testcase name="sendNotification_smsChannel_persistsLog()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="0.273"/>
+  <testcase name="getByUser_isolatedFromOtherUsers()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="0.973"/>
+  <testcase name="getAll_returnsAllNotifications()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="1.018"/>
+  <testcase name="getByUser_emptyForUnknownUser()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="0.012"/>
+  <testcase name="sendNotification_emailChannel_persistsLog()" classname="com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest" time="0.014"/>
+  <system-out><![CDATA[00:01:41.217 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest]: NotificationApiComponentTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+00:01:41.977 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.mini.sardis.notification.NotificationServiceApplication for test class com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest
+00:01:42.168 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest]: NotificationApiComponentTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+00:01:42.169 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.mini.sardis.notification.BaseComponentTest]: BaseComponentTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+00:01:42.173 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.mini.sardis.notification.NotificationServiceApplication for test class com.mini.sardis.notification.infrastructure.adapter.in.web.NotificationApiComponentTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.5)
+
+Formatting metadata directory C:\Users\ASUS\AppData\Local\Temp\kafka-1035969220148586565\combined_0_0 with metadata.version 4.2-IV1.
+00:01:48.310 [quorum-controller-0-event-handler] WARN  o.a.k.controller.QuorumController - [QuorumController id=0] Performing controller activation. The metadata log appears to be empty. Appending 6 bootstrap record(s) in metadata transaction at metadata.version 4.2-IV1 from bootstrap source 'testkit'.
+00:01:49.791 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Transitioning 5 partition(s) to local leaders.
+00:01:49.842 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Creating new partition subscription.cancelled.v1-0 with topic id FFVh5MDhQ6aHrLlH74I1BQ.
+00:01:49.886 [Test worker] INFO  c.m.s.n.i.a.i.w.NotificationApiComponentTest - Starting NotificationApiComponentTest using Java 17.0.1 with PID 4728 (started by ASUS in C:\Users\ASUS\Desktop\turkcell\mini-sardis\notification-service)
+00:01:49.887 [Test worker] DEBUG c.m.s.n.i.a.i.w.NotificationApiComponentTest - Running with Spring Boot v4.0.5, Spring v7.0.6
+00:01:49.888 [Test worker] INFO  c.m.s.n.i.a.i.w.NotificationApiComponentTest - The following 1 profile is active: "componentTest"
+00:01:49.962 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Leader subscription.cancelled.v1-0 with topic id Some(FFVh5MDhQ6aHrLlH74I1BQ) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [0], adding replicas [] and removing replicas [] . Previous leader None and previous leader epoch was -1.
+00:01:49.991 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Creating new partition subscription.suspended.v1-0 with topic id Tt5Q0hjyQa-7rV4yjOCXhQ.
+00:01:50.016 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Leader subscription.suspended.v1-0 with topic id Some(Tt5Q0hjyQa-7rV4yjOCXhQ) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [0], adding replicas [] and removing replicas [] . Previous leader None and previous leader epoch was -1.
+00:01:50.034 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Creating new partition subscription.renewed.v1-0 with topic id gDcSu7otTgGCVlHILgZH_g.
+00:01:50.059 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Leader subscription.renewed.v1-0 with topic id Some(gDcSu7otTgGCVlHILgZH_g) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [0], adding replicas [] and removing replicas [] . Previous leader None and previous leader epoch was -1.
+00:01:50.100 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Creating new partition subscription.activated.v1-0 with topic id LShTezewQl2Q1j8CuAhmfA.
+00:01:50.131 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Leader subscription.activated.v1-0 with topic id Some(LShTezewQl2Q1j8CuAhmfA) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [0], adding replicas [] and removing replicas [] . Previous leader None and previous leader epoch was -1.
+00:01:50.137 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Creating new partition subscription.failed.v1-0 with topic id s0wh9-glRZW5ImMK3AlxZQ.
+00:01:50.144 [kafka-0-metadata-loader-event-handler] INFO  state.change.logger - [Broker id=0] Leader subscription.failed.v1-0 with topic id Some(s0wh9-glRZW5ImMK3AlxZQ) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [0], adding replicas [] and removing replicas [] . Previous leader None and previous leader epoch was -1.
+00:01:52.743 [Test worker] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+00:01:52.867 [Test worker] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 104 ms. Found 1 JPA repository interface.
+00:01:56.144 [Test worker] INFO  o.s.boot.tomcat.TomcatWebServer - Tomcat initialized with port 0 (http)
+00:01:56.178 [Test worker] INFO  o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-auto-1"]
+00:01:56.184 [Test worker] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+00:01:56.188 [Test worker] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/11.0.20]
+00:01:56.411 [Test worker] INFO  o.s.b.w.c.s.WebApplicationContextInitializer - Root WebApplicationContext: initialization completed in 6468 ms
+00:01:57.731 [Test worker] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+00:01:57.998 [Test worker] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:notiftestdb user=SA
+00:01:58.001 [Test worker] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+00:01:58.069 [Test worker] INFO  org.flywaydb.core.FlywayExecutor - Database: jdbc:h2:mem:notiftestdb (H2 2.4)
+00:01:58.077 [Test worker] WARN  o.f.c.i.database.base.Database - Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+00:01:58.123 [Test worker] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Schema history table "PUBLIC"."flyway_schema_history" does not exist yet
+00:01:58.127 [Test worker] INFO  o.f.core.internal.command.DbValidate - Successfully validated 1 migration (execution time 00:00.029s)
+00:01:58.149 [Test worker] INFO  o.f.c.i.s.JdbcTableSchemaHistory - Creating Schema History table "PUBLIC"."flyway_schema_history" ...
+00:01:58.197 [Test worker] INFO  o.f.core.internal.command.DbMigrate - Current version of schema "PUBLIC": << Empty Schema >>
+00:01:58.210 [Test worker] INFO  o.f.core.internal.command.DbMigrate - Migrating schema "PUBLIC" to version "1 - create notification logs"
+00:01:58.228 [Test worker] INFO  o.f.core.internal.command.DbMigrate - Successfully applied 1 migration to schema "PUBLIC", now at version v1 (execution time 00:00.005s)
+00:01:59.452 [Test worker] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+00:01:59.535 [Test worker] WARN  org.hibernate.orm.deprecation - HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+00:02:01.004 [Test worker] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+00:02:01.242 [Test worker] INFO  o.s.d.j.r.q.QueryEnhancerFactories - Hibernate is in classpath; If applicable, HQL parser will be used.
+00:02:04.688 [Test worker] INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 3 endpoints beneath base path '/actuator'
+00:02:04.984 [Test worker] INFO  o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-auto-1"]
+00:02:05.020 [Test worker] INFO  o.s.boot.tomcat.TomcatWebServer - Tomcat started on port 59796 (http) with context path '/'
+00:02:05.083 [Test worker] INFO  c.m.s.n.i.a.i.w.NotificationApiComponentTest - Started NotificationApiComponentTest in 22.824 seconds (process running for 33.064)
+00:02:05.110 [Test worker] WARN  o.s.c.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+00:02:05.110 [Test worker] WARN  o.s.c.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+00:02:05.238 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:05.238 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:05.249 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 5 ms
+00:02:07.153 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] getByUser_returnsNotificationsForUser()
+00:02:07.157 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:07.157 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:07.159 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 2 ms
+00:02:07.327 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] getByUser_emailAndSms_bothReturned()
+00:02:07.352 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:07.353 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:07.356 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 3 ms
+00:02:07.415 [Test worker] INFO  c.m.s.n.i.a.o.n.MockSmsAdapter - 
+╔══════════════════════════════════════════════════╗
+║  SIMULATED SMS  #1
+╠══════════════════════════════════════════════════╣
+║  From    : SARDIS
+║  To      : e2637869-5089-43ea-8a7c-f176f6c6580d
+║  Sent    : 26 Apr 2026 00:02:07
+║  Length  : 18 chars (1 segment)
+╠══════════════════════════════════════════════════╣
+║  Kısa mesaj içeriği
+╚══════════════════════════════════════════════════╝
+00:02:07.590 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] sendNotification_smsChannel_persistsLog()
+00:02:07.613 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:07.613 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:07.614 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+00:02:07.784 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] getByUser_isolatedFromOtherUsers()
+00:02:08.600 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:08.601 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:08.602 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+00:02:09.602 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] getAll_returnsAllNotifications()
+00:02:09.606 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:09.606 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:09.608 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 2 ms
+00:02:09.614 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] getByUser_emptyForUnknownUser()
+00:02:09.617 [Test worker] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring TestDispatcherServlet ''
+00:02:09.617 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+00:02:09.619 [Test worker] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 2 ms
+00:02:09.620 [Test worker] INFO  c.m.s.n.i.a.o.n.MockEmailAdapter - 
+╔══════════════════════════════════════════════════════════════╗
+║  SIMULATED EMAIL  #1
+╠══════════════════════════════════════════════════════════════╣
+║  From   : noreply@mini-sardis.com
+║  To     : 89c9e675-02f0-4b1d-95bb-1e1ea7e57681 
+║  Date   : 26 Apr 2026 00:02:09
+║  Subject: Test Subject
+╠══════════════════════════════════════════════════════════════╣
+║
+║  Test body
+║
+╚══════════════════════════════════════════════════════════════╝
+00:02:09.629 [Test worker] INFO  c.m.s.notification.CustomTestWatcher - [PASS] sendNotification_emailChannel_persistsLog()
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

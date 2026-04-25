@@ -43,4 +43,7 @@ public class PromoCodeJpaEntity {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "applicable_months", length = 50)
+    private String applicableMonths;
 }

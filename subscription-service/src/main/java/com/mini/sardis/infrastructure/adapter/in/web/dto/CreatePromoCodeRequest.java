@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public record CreatePromoCodeRequest(
         @NotBlank @Size(min = 5, max = 20) @Pattern(regexp = "^[A-Z0-9]+$") String code,
@@ -12,5 +13,6 @@ public record CreatePromoCodeRequest(
         @NotNull @DecimalMin("0.01") BigDecimal discountValue,
         @Min(1) Integer maxUses,
         LocalDateTime validFrom,
-        LocalDateTime validTo
+        LocalDateTime validTo,
+        Set<@Min(1) @Max(24) Integer> applicableMonths
 ) {}

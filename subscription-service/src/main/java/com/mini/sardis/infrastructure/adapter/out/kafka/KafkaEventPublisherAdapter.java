@@ -1,15 +1,13 @@
 package com.mini.sardis.infrastructure.adapter.out.kafka;
 
 import com.mini.sardis.application.port.out.KafkaEventPublisherPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class KafkaEventPublisherAdapter implements KafkaEventPublisherPort {
-
-    private static final Logger log = LoggerFactory.getLogger(KafkaEventPublisherAdapter.class);
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 

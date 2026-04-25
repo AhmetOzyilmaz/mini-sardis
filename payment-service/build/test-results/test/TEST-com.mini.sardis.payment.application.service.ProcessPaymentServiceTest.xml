@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.mini.sardis.payment.application.service.ProcessPaymentServiceTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-04-25T21:02:23.192Z" hostname="DESKTOP-MFFJA06" time="6.14">
+  <properties/>
+  <testcase name="renewalPayment_eventIncludesPaymentType()" classname="com.mini.sardis.payment.application.service.ProcessPaymentServiceTest" time="0.049"/>
+  <testcase name="duplicateIdempotencyKey_skipsProcessing()" classname="com.mini.sardis.payment.application.service.ProcessPaymentServiceTest" time="0.02"/>
+  <testcase name="successfulPayment_publishesCompletedEvent()" classname="com.mini.sardis.payment.application.service.ProcessPaymentServiceTest" time="0.01"/>
+  <testcase name="failedPayment_retriesThreeTimes()" classname="com.mini.sardis.payment.application.service.ProcessPaymentServiceTest" time="3.037"/>
+  <testcase name="failedPayment_publishesFailedEvent()" classname="com.mini.sardis.payment.application.service.ProcessPaymentServiceTest" time="3.02"/>
+  <system-out><![CDATA[00:02:23.234 [Test worker] INFO com.mini.sardis.payment.application.service.ProcessPaymentService -- Payment succeeded for subscription=038934ac-b3ba-48bb-8a1c-05701f38b117 type=RENEWAL method=CREDIT_CARD
+00:02:23.261 [Test worker] INFO com.mini.sardis.payment.application.service.ProcessPaymentService -- Duplicate payment request skipped: key-dup
+00:02:23.270 [Test worker] INFO com.mini.sardis.payment.application.service.ProcessPaymentService -- Payment succeeded for subscription=ec4094d8-b7fd-483d-aa74-3155d69aa40a type=INITIAL method=CREDIT_CARD
+00:02:26.308 [Test worker] WARN com.mini.sardis.payment.application.service.ProcessPaymentService -- Payment failed for subscription=dd66d999-65d6-4cc2-ab42-68661b750bb8 reason=timeout
+00:02:29.329 [Test worker] WARN com.mini.sardis.payment.application.service.ProcessPaymentService -- Payment failed for subscription=cd9ac953-91dc-48a6-94d8-d9a553a441f6 reason=insufficient_funds
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

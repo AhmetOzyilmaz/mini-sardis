@@ -9,17 +9,18 @@ import com.mini.sardis.payment.application.port.out.ExternalPaymentPort;
 import com.mini.sardis.payment.application.port.out.PaymentRepositoryPort;
 import com.mini.sardis.payment.domain.entity.Payment;
 import com.mini.sardis.payment.domain.value.PaymentStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ProcessPaymentService implements ProcessPaymentUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(ProcessPaymentService.class);
     private static final int MAX_RETRIES = 3;
 
     private final PaymentRepositoryPort paymentRepo;
@@ -27,20 +28,9 @@ public class ProcessPaymentService implements ProcessPaymentUseCase {
     private final EventPublisherPort eventPublisher;
     private final ObjectMapper objectMapper;
 
-    public ProcessPaymentService(PaymentRepositoryPort paymentRepo,
-                                  ExternalPaymentPort externalPayment,
-                                  EventPublisherPort eventPublisher,
-                                  ObjectMapper objectMapper) {
-        this.paymentRepo = paymentRepo;
-        this.externalPayment = externalPayment;
-        this.eventPublisher = eventPublisher;
-        this.objectMapper = objectMapper;
-    }
-
     @Override
     @Transactional
     public void execute(ProcessPaymentCommand command) {
-        // Idempotency check: skip if already processed
         if (paymentRepo.findByIdempotencyKey(command.idempotencyKey())
                 .filter(p -> p.getStatus() != PaymentStatus.PENDING)
                 .isPresent()) {
@@ -49,7 +39,8 @@ public class ProcessPaymentService implements ProcessPaymentUseCase {
         }
 
         Payment payment = Payment.create(command.subscriptionId(), command.userId(),
-                command.idempotencyKey(), command.amount(), command.currency(), command.paymentType());
+                command.idempotencyKey(), command.amount(), command.currency(),
+                command.paymentType(), command.paymentMethod());
         payment = paymentRepo.save(payment);
 
         ExternalPaymentPort.ExternalPaymentResult result = chargeWithRetry(payment);
@@ -57,7 +48,8 @@ public class ProcessPaymentService implements ProcessPaymentUseCase {
         if (result.success()) {
             payment.markSuccess(result.externalRef());
             paymentRepo.save(payment);
-            log.info("Payment succeeded for subscription={} type={}", command.subscriptionId(), command.paymentType());
+            log.info("Payment succeeded for subscription={} type={} method={}",
+                    command.subscriptionId(), command.paymentType(), command.paymentMethod());
             eventPublisher.publish("payment.completed.v1",
                     command.subscriptionId().toString(),
                     buildEvent(payment, "completed"));
@@ -76,7 +68,7 @@ public class ProcessPaymentService implements ProcessPaymentUseCase {
         long delayMs = 1000;
         for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             result = externalPayment.charge(payment.getIdempotencyKey(),
-                    payment.getAmount(), payment.getCurrency());
+                    payment.getAmount(), payment.getCurrency(), payment.getPaymentMethod());
             if (result.success()) return result;
             payment.incrementRetry();
             paymentRepo.save(payment);
@@ -95,6 +87,7 @@ public class ProcessPaymentService implements ProcessPaymentUseCase {
                     "subscriptionId", p.getSubscriptionId().toString(),
                     "userId", p.getUserId().toString(),
                     "paymentType", p.getType().name(),
+                    "paymentMethod", p.getPaymentMethod().name(),
                     "amount", p.getAmount(),
                     "currency", p.getCurrency(),
                     "outcome", outcome,

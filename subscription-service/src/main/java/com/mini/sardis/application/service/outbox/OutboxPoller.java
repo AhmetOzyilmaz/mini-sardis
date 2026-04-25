@@ -3,18 +3,17 @@ package com.mini.sardis.application.service.outbox;
 import com.mini.sardis.application.port.out.KafkaEventPublisherPort;
 import com.mini.sardis.application.port.out.OutboxRepositoryPort;
 import com.mini.sardis.domain.entity.OutboxEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class OutboxPoller {
 
-    private static final Logger log = LoggerFactory.getLogger(OutboxPoller.class);
     private static final int BATCH_SIZE = 100;
 
     private final OutboxRepositoryPort outboxRepo;

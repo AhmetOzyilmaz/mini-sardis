@@ -3,6 +3,7 @@ package com.mini.sardis.infrastructure.adapter.out.jpa;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
 import com.mini.sardis.domain.entity.Subscription;
 import com.mini.sardis.domain.value.SubscriptionStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -11,13 +12,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class JpaSubscriptionRepositoryAdapter implements SubscriptionRepositoryPort {
 
     private final JpaSubscriptionRepository jpaRepo;
-
-    public JpaSubscriptionRepositoryAdapter(JpaSubscriptionRepository jpaRepo) {
-        this.jpaRepo = jpaRepo;
-    }
 
     @Override
     public Subscription save(Subscription subscription) {

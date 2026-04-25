@@ -1,18 +1,18 @@
 package com.mini.sardis.common.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
 import java.util.stream.Collectors;
 
+@Slf4j
 public abstract class GlobalExceptionHandlerBase {
 
-    protected final Logger log = LoggerFactory.getLogger(getClass());
     protected static final String BASE = "https://api.sardis.com/errors/";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -23,6 +23,15 @@ public abstract class GlobalExceptionHandlerBase {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
         pd.setType(URI.create(BASE + "validation-failed"));
         pd.setTitle("Validation Failed");
+        return pd;
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ProblemDetail handleResponseStatus(ResponseStatusException ex) {
+        String detail = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.valueOf(ex.getStatusCode().value()), detail);
+        pd.setType(URI.create(BASE + "response-status"));
         return pd;
     }
 

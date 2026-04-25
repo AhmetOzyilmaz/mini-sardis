@@ -1,12 +1,15 @@
 package com.mini.sardis.payment.domain.entity;
 
+import com.mini.sardis.payment.domain.value.PaymentMethod;
 import com.mini.sardis.payment.domain.value.PaymentStatus;
 import com.mini.sardis.payment.domain.value.PaymentType;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class Payment {
 
     private final UUID id;
@@ -17,6 +20,7 @@ public class Payment {
     private final String currency;
     private PaymentStatus status;
     private final PaymentType type;
+    private final PaymentMethod paymentMethod;
     private String externalRef;
     private String failureReason;
     private int retryCount;
@@ -32,6 +36,7 @@ public class Payment {
         this.currency = b.currency;
         this.status = b.status;
         this.type = b.type;
+        this.paymentMethod = b.paymentMethod;
         this.externalRef = b.externalRef;
         this.failureReason = b.failureReason;
         this.retryCount = b.retryCount;
@@ -40,7 +45,8 @@ public class Payment {
     }
 
     public static Payment create(UUID subscriptionId, UUID userId, String idempotencyKey,
-                                  BigDecimal amount, String currency, PaymentType type) {
+                                  BigDecimal amount, String currency, PaymentType type,
+                                  PaymentMethod paymentMethod) {
         return new Builder()
                 .id(UUID.randomUUID())
                 .subscriptionId(subscriptionId)
@@ -50,6 +56,7 @@ public class Payment {
                 .currency(currency)
                 .status(PaymentStatus.PENDING)
                 .type(type)
+                .paymentMethod(paymentMethod != null ? paymentMethod : PaymentMethod.CREDIT_CARD)
                 .retryCount(0)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -69,20 +76,6 @@ public class Payment {
 
     public void incrementRetry() { this.retryCount++; }
 
-    public UUID getId() { return id; }
-    public UUID getSubscriptionId() { return subscriptionId; }
-    public UUID getUserId() { return userId; }
-    public String getIdempotencyKey() { return idempotencyKey; }
-    public BigDecimal getAmount() { return amount; }
-    public String getCurrency() { return currency; }
-    public PaymentStatus getStatus() { return status; }
-    public PaymentType getType() { return type; }
-    public String getExternalRef() { return externalRef; }
-    public String getFailureReason() { return failureReason; }
-    public int getRetryCount() { return retryCount; }
-    public LocalDateTime getProcessedAt() { return processedAt; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-
     public static Builder builder() { return new Builder(); }
 
     public static class Builder {
@@ -94,6 +87,7 @@ public class Payment {
         private String currency;
         private PaymentStatus status = PaymentStatus.PENDING;
         private PaymentType type;
+        private PaymentMethod paymentMethod;
         private String externalRef;
         private String failureReason;
         private int retryCount;
@@ -108,6 +102,7 @@ public class Payment {
         public Builder currency(String currency) { this.currency = currency; return this; }
         public Builder status(PaymentStatus status) { this.status = status; return this; }
         public Builder type(PaymentType type) { this.type = type; return this; }
+        public Builder paymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; return this; }
         public Builder externalRef(String externalRef) { this.externalRef = externalRef; return this; }
         public Builder failureReason(String failureReason) { this.failureReason = failureReason; return this; }
         public Builder retryCount(int retryCount) { this.retryCount = retryCount; return this; }

@@ -14,7 +14,23 @@
       "Read(//c/Program Files/Java//**)",
       "Read(//c/Program Files/**)",
       "Read(//c/Program Files/Microsoft//**)",
-      "Bash(java -version)"
+      "Bash(java -version)",
+      "Bash(where java *)",
+      "Bash(JAVA_HOME=\"\" cd \"C:\\\\Users\\\\ASUS\\\\Desktop\\\\turkcell\\\\mini-sardis\\\\subscription-service\")",
+      "Bash(JAVA_HOME=\"\" ./gradlew build -x test)",
+      "Bash(git restore *)",
+      "Bash(./gradlew :payment-service:compileJava :notification-service:compileJava :subscription-service:compileJava --no-daemon)",
+      "Bash(set \"JAVA_HOME=C:\\\\Program Files\\\\Common Files\\\\Oracle\\\\Java\\\\javapath\")",
+      "PowerShell(cd \"C:\\\\Users\\\\ASUS\\\\Desktop\\\\turkcell\\\\mini-sardis\"; $env:JAVA_HOME = \"C:\\\\Program Files\\\\Common Files\\\\Oracle\\\\Java\\\\javapath\"; .\\\\gradlew.bat \":payment-service:compileJava\" \":notification-service:compileJava\" \":subscription-service:compileJava\" \"--no-daemon\" 2>&1 | Select-Object -Last 50)",
+      "Bash(export JAVA_HOME=\"/c/Users/ASUS/AppData/Local/jdk-21.0.11\")",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(export JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\")",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\" ./gradlew build -x test)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\" ./gradlew test)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\" ./gradlew :subscription-service:compileTestJava)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\" ./gradlew :subscription-service:dependencies --configuration testCompileClasspath)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\" ./gradlew compileTestJava)",
+      "Bash(JAVA_HOME=\"C:/Program Files/Java/jdk-21.0.11\" ./gradlew test --tests \"*ServiceTest\" --tests \"*UseCaseTest\")"
     ]
   }
 }

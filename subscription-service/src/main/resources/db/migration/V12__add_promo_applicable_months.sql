@@ -1,0 +1,1 @@
+ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS applicable_months VARCHAR(50) DEFAULT NULL;

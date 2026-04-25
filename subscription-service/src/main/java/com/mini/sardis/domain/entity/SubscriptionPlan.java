@@ -1,11 +1,13 @@
 package com.mini.sardis.domain.entity;
 
 import com.mini.sardis.domain.value.Money;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class SubscriptionPlan {
 
     private final UUID id;
@@ -27,15 +29,6 @@ public class SubscriptionPlan {
         this.active = b.active;
         this.createdAt = b.createdAt;
     }
-
-    public UUID getId() { return id; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public Money getPrice() { return price; }
-    public int getDurationDays() { return durationDays; }
-    public int getTrialDays() { return trialDays; }
-    public boolean isActive() { return active; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 
     public static Builder builder() { return new Builder(); }
 

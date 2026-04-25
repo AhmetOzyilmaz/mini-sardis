@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,22 +21,13 @@ import java.util.UUID;
 @RequestMapping("/api/v1/subscriptions")
 @Tag(name = "Subscriptions", description = "Subscription lifecycle management")
 @SecurityRequirement(name = "bearerAuth")
+@RequiredArgsConstructor
 public class SubscriptionController {
 
     private final CreateSubscriptionUseCase createUseCase;
     private final CancelSubscriptionUseCase cancelUseCase;
     private final GetSubscriptionUseCase getUseCase;
     private final JwtTokenProvider jwtTokenProvider;
-
-    public SubscriptionController(CreateSubscriptionUseCase createUseCase,
-                                  CancelSubscriptionUseCase cancelUseCase,
-                                  GetSubscriptionUseCase getUseCase,
-                                  JwtTokenProvider jwtTokenProvider) {
-        this.createUseCase = createUseCase;
-        this.cancelUseCase = cancelUseCase;
-        this.getUseCase = getUseCase;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
 
     @Operation(summary = "Create a new subscription (returns 202 while payment is pending)")
     @PostMapping
@@ -44,7 +36,7 @@ public class SubscriptionController {
             @RequestHeader("Authorization") String authHeader) {
         UUID userId = extractUserId(authHeader);
         SubscriptionResult result = createUseCase.execute(
-                new CreateSubscriptionCommand(userId, request.planId(), request.promoCode()));
+                new CreateSubscriptionCommand(userId, request.planId(), request.promoCode(), request.paymentMethod()));
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(SubscriptionResponse.from(result));
     }
 

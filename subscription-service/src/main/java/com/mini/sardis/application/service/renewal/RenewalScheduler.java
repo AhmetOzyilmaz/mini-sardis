@@ -6,8 +6,7 @@ import com.mini.sardis.application.port.out.OutboxRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
 import com.mini.sardis.domain.entity.OutboxEvent;
 import com.mini.sardis.domain.entity.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +15,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class RenewalScheduler {
-
-    private static final Logger log = LoggerFactory.getLogger(RenewalScheduler.class);
 
     private final SubscriptionRepositoryPort subscriptionRepo;
     private final OutboxRepositoryPort outboxRepo;

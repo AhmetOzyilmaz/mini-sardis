@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public record CreateSubscriptionRequest(
         @NotNull UUID planId,
-        @Size(min = 5, max = 20) String promoCode
+        @Size(min = 5, max = 20) String promoCode,
+        String paymentMethod
 ) {}

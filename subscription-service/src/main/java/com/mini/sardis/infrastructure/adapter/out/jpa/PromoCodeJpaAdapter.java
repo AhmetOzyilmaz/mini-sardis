@@ -2,18 +2,19 @@ package com.mini.sardis.infrastructure.adapter.out.jpa;
 
 import com.mini.sardis.application.port.out.PromoCodeRepositoryPort;
 import com.mini.sardis.domain.entity.PromoCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class PromoCodeJpaAdapter implements PromoCodeRepositoryPort {
 
     private final JpaPromoCodeRepository jpaRepo;
-
-    public PromoCodeJpaAdapter(JpaPromoCodeRepository jpaRepo) {
-        this.jpaRepo = jpaRepo;
-    }
 
     @Override
     public Optional<PromoCode> findByCode(String code) {
@@ -37,6 +38,7 @@ public class PromoCodeJpaAdapter implements PromoCodeRepositoryPort {
                 .validFrom(p.getValidFrom())
                 .validTo(p.getValidTo())
                 .createdAt(p.getCreatedAt())
+                .applicableMonths(serializeMonths(p.getApplicableMonths()))
                 .build();
     }
 
@@ -52,6 +54,21 @@ public class PromoCodeJpaAdapter implements PromoCodeRepositoryPort {
                 .validFrom(e.getValidFrom())
                 .validTo(e.getValidTo())
                 .createdAt(e.getCreatedAt())
+                .applicableMonths(deserializeMonths(e.getApplicableMonths()))
                 .build();
+    }
+
+    private String serializeMonths(Set<Integer> months) {
+        if (months == null || months.isEmpty()) return null;
+        return months.stream().sorted().map(String::valueOf).collect(Collectors.joining(","));
+    }
+
+    private Set<Integer> deserializeMonths(String value) {
+        if (value == null || value.isBlank()) return null;
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.toSet());
     }
 }

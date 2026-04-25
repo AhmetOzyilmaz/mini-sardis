@@ -1,10 +1,12 @@
 package com.mini.sardis.notification.domain.entity;
 
 import com.mini.sardis.notification.domain.value.NotificationChannel;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class NotificationLog {
 
     private final UUID id;
@@ -38,11 +40,4 @@ public class NotificationLog {
         return new NotificationLog(id, userId, channel, subject, body, success, sentAt);
     }
 
-    public UUID getId() { return id; }
-    public UUID getUserId() { return userId; }
-    public NotificationChannel getChannel() { return channel; }
-    public String getSubject() { return subject; }
-    public String getBody() { return body; }
-    public boolean isSuccess() { return success; }
-    public LocalDateTime getSentAt() { return sentAt; }
 }

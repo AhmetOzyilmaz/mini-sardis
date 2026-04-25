@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="appName"
+                    source="spring.application.name" defaultValue="sardis"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Project packages always at DEBUG -->
+    <logger name="com.mini.sardis" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- Silence noisy libraries -->
+    <logger name="org.springframework"          level="INFO"/>
+    <logger name="org.hibernate"                level="WARN"/>
+    <logger name="org.apache.kafka"             level="WARN"/>
+    <logger name="kafka"                        level="WARN"/>
+    <logger name="org.flywaydb"                 level="INFO"/>
+
+    <springProfile name="production">
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!production">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>

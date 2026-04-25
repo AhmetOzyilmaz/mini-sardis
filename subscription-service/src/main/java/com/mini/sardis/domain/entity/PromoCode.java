@@ -2,12 +2,15 @@ package com.mini.sardis.domain.entity;
 
 import com.mini.sardis.application.exception.InvalidPromoCodeException;
 import com.mini.sardis.domain.value.DiscountType;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
+@Getter
 public class PromoCode {
 
     private final UUID id;
@@ -20,6 +23,7 @@ public class PromoCode {
     private final LocalDateTime validFrom;
     private final LocalDateTime validTo;
     private final LocalDateTime createdAt;
+    private final Set<Integer> applicableMonths;
 
     private PromoCode(Builder b) {
         this.id = b.id;
@@ -32,10 +36,17 @@ public class PromoCode {
         this.validFrom = b.validFrom;
         this.validTo = b.validTo;
         this.createdAt = b.createdAt;
+        this.applicableMonths = b.applicableMonths;
     }
 
     public static PromoCode create(String code, DiscountType discountType, BigDecimal discountValue,
                                    Integer maxUses, LocalDateTime validFrom, LocalDateTime validTo) {
+        return create(code, discountType, discountValue, maxUses, validFrom, validTo, null);
+    }
+
+    public static PromoCode create(String code, DiscountType discountType, BigDecimal discountValue,
+                                   Integer maxUses, LocalDateTime validFrom, LocalDateTime validTo,
+                                   Set<Integer> applicableMonths) {
         return new Builder()
                 .id(UUID.randomUUID())
                 .code(code.toUpperCase())
@@ -47,6 +58,7 @@ public class PromoCode {
                 .validFrom(validFrom)
                 .validTo(validTo)
                 .createdAt(LocalDateTime.now())
+                .applicableMonths(applicableMonths)
                 .build();
     }
 
@@ -66,6 +78,16 @@ public class PromoCode {
         }
     }
 
+    public void validate(int durationMonths) {
+        validate();
+        if (applicableMonths != null && !applicableMonths.isEmpty()
+                && !applicableMonths.contains(durationMonths)) {
+            throw new InvalidPromoCodeException(
+                    "Promo code '" + code + "' is not applicable for " + durationMonths
+                            + "-month subscriptions. Applicable: " + applicableMonths);
+        }
+    }
+
     public BigDecimal calculateDiscountAmount(BigDecimal originalAmount) {
         BigDecimal discount;
         if (discountType == DiscountType.PERCENTAGE) {
@@ -82,17 +104,6 @@ public class PromoCode {
         this.currentUses += 1;
     }
 
-    public UUID getId() { return id; }
-    public String getCode() { return code; }
-    public DiscountType getDiscountType() { return discountType; }
-    public BigDecimal getDiscountValue() { return discountValue; }
-    public Integer getMaxUses() { return maxUses; }
-    public int getCurrentUses() { return currentUses; }
-    public boolean isActive() { return active; }
-    public LocalDateTime getValidFrom() { return validFrom; }
-    public LocalDateTime getValidTo() { return validTo; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-
     public static Builder builder() { return new Builder(); }
 
     public static class Builder {
@@ -106,6 +117,7 @@ public class PromoCode {
         private LocalDateTime validFrom;
         private LocalDateTime validTo;
         private LocalDateTime createdAt;
+        private Set<Integer> applicableMonths;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder code(String code) { this.code = code; return this; }
@@ -117,6 +129,7 @@ public class PromoCode {
         public Builder validFrom(LocalDateTime validFrom) { this.validFrom = validFrom; return this; }
         public Builder validTo(LocalDateTime validTo) { this.validTo = validTo; return this; }
         public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public Builder applicableMonths(Set<Integer> applicableMonths) { this.applicableMonths = applicableMonths; return this; }
         public PromoCode build() { return new PromoCode(this); }
     }
 }

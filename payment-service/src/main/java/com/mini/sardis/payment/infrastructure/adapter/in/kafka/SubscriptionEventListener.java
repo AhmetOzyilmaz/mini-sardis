@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mini.sardis.payment.application.port.in.ProcessPaymentCommand;
 import com.mini.sardis.payment.application.port.in.ProcessPaymentUseCase;
+import com.mini.sardis.payment.domain.value.PaymentMethod;
 import com.mini.sardis.payment.domain.value.PaymentType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
@@ -14,19 +15,13 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class SubscriptionEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(SubscriptionEventListener.class);
 
     private final ProcessPaymentUseCase processPaymentUseCase;
     private final ObjectMapper objectMapper;
-
-    public SubscriptionEventListener(ProcessPaymentUseCase processPaymentUseCase,
-                                      ObjectMapper objectMapper) {
-        this.processPaymentUseCase = processPaymentUseCase;
-        this.objectMapper = objectMapper;
-    }
 
     @KafkaListener(topics = "subscription.created.v1", groupId = "payment-subscription-processor")
     public void onSubscriptionCreated(@Payload String payload) {
@@ -40,10 +35,12 @@ public class SubscriptionEventListener {
                     : amount;
             String currency = node.get("currency").asText();
             String idempotencyKey = node.get("idempotencyKey").asText();
+            PaymentMethod paymentMethod = parsePaymentMethod(node.path("paymentMethod").asText(null));
 
-            log.info("Received subscription.created.v1 for subscriptionId={}", subscriptionId);
+            log.info("Received subscription.created.v1 for subscriptionId={} method={}", subscriptionId, paymentMethod);
             processPaymentUseCase.execute(new ProcessPaymentCommand(
-                    subscriptionId, userId, idempotencyKey, finalAmount, currency, PaymentType.INITIAL));
+                    subscriptionId, userId, idempotencyKey, finalAmount, currency,
+                    PaymentType.INITIAL, paymentMethod));
         } catch (Exception e) {
             log.error("Error processing subscription.created.v1: {}", e.getMessage(), e);
         }
@@ -59,11 +56,22 @@ public class SubscriptionEventListener {
             String currency = node.get("currency").asText();
             String idempotencyKey = node.get("idempotencyKey").asText();
 
-            log.info("Received renewal.requested.v1 for subscriptionId={}", subscriptionId);
+            PaymentMethod paymentMethod = parsePaymentMethod(node.path("paymentMethod").asText(null));
+            log.info("Received renewal.requested.v1 for subscriptionId={} method={}", subscriptionId, paymentMethod);
             processPaymentUseCase.execute(new ProcessPaymentCommand(
-                    subscriptionId, userId, idempotencyKey, amount, currency, PaymentType.RENEWAL));
+                    subscriptionId, userId, idempotencyKey, amount, currency,
+                    PaymentType.RENEWAL, paymentMethod));
         } catch (Exception e) {
             log.error("Error processing renewal.requested.v1: {}", e.getMessage(), e);
+        }
+    }
+
+    private PaymentMethod parsePaymentMethod(String value) {
+        if (value == null || value.isBlank()) return PaymentMethod.CREDIT_CARD;
+        try {
+            return PaymentMethod.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return PaymentMethod.CREDIT_CARD;
         }
     }
 }

@@ -1,12 +1,14 @@
 package com.mini.sardis.domain.entity;
 
 import com.mini.sardis.domain.value.SubscriptionStatus;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class Subscription {
 
     private final UUID id;
@@ -122,24 +124,6 @@ public class Subscription {
                 && nextRenewalDate != null
                 && !nextRenewalDate.isAfter(LocalDate.now());
     }
-
-    public UUID getId() { return id; }
-    public UUID getUserId() { return userId; }
-    public UUID getPlanId() { return planId; }
-    public SubscriptionStatus getStatus() { return status; }
-    public LocalDate getStartDate() { return startDate; }
-    public LocalDate getEndDate() { return endDate; }
-    public LocalDate getNextRenewalDate() { return nextRenewalDate; }
-    public LocalDateTime getCancelledAt() { return cancelledAt; }
-    public String getCancellationReason() { return cancellationReason; }
-    public int getVersion() { return version; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public BigDecimal getAmount() { return amount; }
-    public String getCurrency() { return currency; }
-    public UUID getPromoCodeId() { return promoCodeId; }
-    public BigDecimal getDiscountAmount() { return discountAmount; }
-    public BigDecimal getFinalAmount() { return finalAmount; }
 
     public static Builder builder() { return new Builder(); }
 

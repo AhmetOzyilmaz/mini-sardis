@@ -8,29 +8,21 @@ import com.mini.sardis.payment.application.port.out.EventPublisherPort;
 import com.mini.sardis.payment.application.port.out.PaymentRepositoryPort;
 import com.mini.sardis.payment.domain.entity.Payment;
 import com.mini.sardis.payment.domain.value.PaymentStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class HandleWebhookService implements HandleWebhookUseCase {
-
-    private static final Logger log = LoggerFactory.getLogger(HandleWebhookService.class);
 
     private final PaymentRepositoryPort paymentRepo;
     private final EventPublisherPort eventPublisher;
     private final ObjectMapper objectMapper;
-
-    public HandleWebhookService(PaymentRepositoryPort paymentRepo,
-                                 EventPublisherPort eventPublisher,
-                                 ObjectMapper objectMapper) {
-        this.paymentRepo = paymentRepo;
-        this.eventPublisher = eventPublisher;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     @Transactional

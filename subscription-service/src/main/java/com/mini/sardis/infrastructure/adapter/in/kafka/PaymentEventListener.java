@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mini.sardis.application.port.in.subscription.ActivateSubscriptionUseCase;
 import com.mini.sardis.application.port.in.subscription.HandlePaymentFailedUseCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -14,10 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class PaymentEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(PaymentEventListener.class);
 
     private final ActivateSubscriptionUseCase activateUseCase;
     private final HandlePaymentFailedUseCase handleFailedUseCase;

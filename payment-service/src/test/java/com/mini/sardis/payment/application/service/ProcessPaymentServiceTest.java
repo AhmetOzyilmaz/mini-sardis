@@ -42,7 +42,7 @@ class ProcessPaymentServiceTest {
 
         when(paymentRepo.findByIdempotencyKey("key-1")).thenReturn(Optional.empty());
         when(paymentRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(externalPayment.charge(any(), any(), any()))
+        when(externalPayment.charge(any(), any(), any(), any()))
                 .thenReturn(new ExternalPaymentPort.ExternalPaymentResult(true, "ext-ref-123", null));
 
         service.execute(cmd);
@@ -57,7 +57,7 @@ class ProcessPaymentServiceTest {
 
         when(paymentRepo.findByIdempotencyKey("key-2")).thenReturn(Optional.empty());
         when(paymentRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(externalPayment.charge(any(), any(), any()))
+        when(externalPayment.charge(any(), any(), any(), any()))
                 .thenReturn(new ExternalPaymentPort.ExternalPaymentResult(false, null, "insufficient_funds"));
 
         service.execute(cmd);
@@ -83,7 +83,7 @@ class ProcessPaymentServiceTest {
 
         service.execute(buildCommand("key-dup", PaymentType.INITIAL));
 
-        verify(externalPayment, never()).charge(any(), any(), any());
+        verify(externalPayment, never()).charge(any(), any(), any(), any());
         verify(eventPublisher, never()).publish(any(), any(), any());
     }
 
@@ -93,12 +93,12 @@ class ProcessPaymentServiceTest {
 
         when(paymentRepo.findByIdempotencyKey("key-retry")).thenReturn(Optional.empty());
         when(paymentRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(externalPayment.charge(any(), any(), any()))
+        when(externalPayment.charge(any(), any(), any(), any()))
                 .thenReturn(new ExternalPaymentPort.ExternalPaymentResult(false, null, "timeout"));
 
         service.execute(cmd);
 
-        verify(externalPayment, times(3)).charge(any(), any(), any());
+        verify(externalPayment, times(3)).charge(any(), any(), any(), any());
         verify(eventPublisher).publish(eq("payment.failed.v1"), anyString(), anyString());
     }
 
@@ -108,7 +108,7 @@ class ProcessPaymentServiceTest {
 
         when(paymentRepo.findByIdempotencyKey("key-renewal")).thenReturn(Optional.empty());
         when(paymentRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(externalPayment.charge(any(), any(), any()))
+        when(externalPayment.charge(any(), any(), any(), any()))
                 .thenReturn(new ExternalPaymentPort.ExternalPaymentResult(true, "ref-renewal", null));
 
         service.execute(cmd);

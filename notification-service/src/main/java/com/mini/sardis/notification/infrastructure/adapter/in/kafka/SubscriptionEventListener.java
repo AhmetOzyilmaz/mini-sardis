@@ -5,27 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mini.sardis.notification.application.port.in.SendNotificationCommand;
 import com.mini.sardis.notification.application.port.in.SendNotificationUseCase;
 import com.mini.sardis.notification.domain.value.NotificationChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class SubscriptionEventListener {
-
-    private static final Logger log = LoggerFactory.getLogger(SubscriptionEventListener.class);
 
     private final SendNotificationUseCase sendNotificationUseCase;
     private final ObjectMapper objectMapper;
-
-    public SubscriptionEventListener(SendNotificationUseCase sendNotificationUseCase,
-                                      ObjectMapper objectMapper) {
-        this.sendNotificationUseCase = sendNotificationUseCase;
-        this.objectMapper = objectMapper;
-    }
 
     @KafkaListener(topics = "subscription.activated.v1", groupId = "notification-sender")
     public void onSubscriptionActivated(@Payload String payload) {
@@ -56,10 +50,12 @@ public class SubscriptionEventListener {
         try {
             JsonNode node = objectMapper.readTree(payload);
             UUID userId = UUID.fromString(node.get("userId").asText());
-            NotificationTemplate template = NotificationTemplate.forTopic(topic, node);
-            log.info("Notification triggered: topic={} userId={}", topic, userId);
-            sendNotificationUseCase.execute(new SendNotificationCommand(
-                    userId, template.channel(), template.subject(), template.body()));
+            var templates = NotificationTemplate.forTopic(topic, node);
+            log.info("Notification triggered: topic={} userId={} channels={}", topic, userId, templates.size());
+            for (NotificationTemplate template : templates) {
+                sendNotificationUseCase.execute(new SendNotificationCommand(
+                        userId, template.channel(), template.subject(), template.body()));
+            }
         } catch (Exception e) {
             log.error("Error processing notification for topic={}: {}", topic, e.getMessage(), e);
         }

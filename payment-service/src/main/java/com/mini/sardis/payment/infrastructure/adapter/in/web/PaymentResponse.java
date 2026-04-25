@@ -1,6 +1,7 @@
 package com.mini.sardis.payment.infrastructure.adapter.in.web;
 
 import com.mini.sardis.payment.domain.entity.Payment;
+import com.mini.sardis.payment.domain.value.PaymentMethod;
 import com.mini.sardis.payment.domain.value.PaymentStatus;
 import com.mini.sardis.payment.domain.value.PaymentType;
 
@@ -15,6 +16,7 @@ public record PaymentResponse(
         String currency,
         PaymentStatus status,
         PaymentType type,
+        PaymentMethod paymentMethod,
         String externalRef,
         String failureReason,
         int retryCount,
@@ -22,7 +24,7 @@ public record PaymentResponse(
 ) {
     public static PaymentResponse from(Payment p) {
         return new PaymentResponse(p.getId(), p.getSubscriptionId(), p.getAmount(),
-                p.getCurrency(), p.getStatus(), p.getType(), p.getExternalRef(),
-                p.getFailureReason(), p.getRetryCount(), p.getCreatedAt());
+                p.getCurrency(), p.getStatus(), p.getType(), p.getPaymentMethod(),
+                p.getExternalRef(), p.getFailureReason(), p.getRetryCount(), p.getCreatedAt());
     }
 }

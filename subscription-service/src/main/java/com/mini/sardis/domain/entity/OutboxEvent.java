@@ -1,8 +1,11 @@
 package com.mini.sardis.domain.entity;
 
+import lombok.Getter;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class OutboxEvent {
 
     private final UUID id;
@@ -45,12 +48,4 @@ public class OutboxEvent {
         this.processedAt = LocalDateTime.now();
     }
 
-    public UUID getId() { return id; }
-    public UUID getAggregateId() { return aggregateId; }
-    public String getAggregateType() { return aggregateType; }
-    public String getEventType() { return eventType; }
-    public String getPayload() { return payload; }
-    public boolean isProcessed() { return processed; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getProcessedAt() { return processedAt; }
 }

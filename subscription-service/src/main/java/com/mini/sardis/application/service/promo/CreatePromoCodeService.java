@@ -4,17 +4,15 @@ import com.mini.sardis.application.port.in.promo.CreatePromoCodeCommand;
 import com.mini.sardis.application.port.in.promo.CreatePromoCodeUseCase;
 import com.mini.sardis.application.port.out.PromoCodeRepositoryPort;
 import com.mini.sardis.domain.entity.PromoCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class CreatePromoCodeService implements CreatePromoCodeUseCase {
 
     private final PromoCodeRepositoryPort promoCodeRepo;
-
-    public CreatePromoCodeService(PromoCodeRepositoryPort promoCodeRepo) {
-        this.promoCodeRepo = promoCodeRepo;
-    }
 
     @Override
     @Transactional
@@ -25,7 +23,8 @@ public class CreatePromoCodeService implements CreatePromoCodeUseCase {
                 command.discountValue(),
                 command.maxUses(),
                 command.validFrom(),
-                command.validTo()
+                command.validTo(),
+                command.applicableMonths()
         );
         return promoCodeRepo.save(promoCode);
     }

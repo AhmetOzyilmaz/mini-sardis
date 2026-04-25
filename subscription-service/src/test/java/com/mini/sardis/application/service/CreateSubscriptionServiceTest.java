@@ -5,6 +5,7 @@ import com.mini.sardis.application.exception.PlanNotFoundException;
 import com.mini.sardis.application.port.in.subscription.CreateSubscriptionCommand;
 import com.mini.sardis.application.port.in.subscription.SubscriptionResult;
 import com.mini.sardis.application.port.out.OutboxRepositoryPort;
+import com.mini.sardis.application.port.out.PromoCodeRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionPlanRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
 import com.mini.sardis.application.service.subscription.CreateSubscriptionService;
@@ -32,12 +33,14 @@ class CreateSubscriptionServiceTest {
     @Mock private SubscriptionRepositoryPort subscriptionRepo;
     @Mock private SubscriptionPlanRepositoryPort planRepo;
     @Mock private OutboxRepositoryPort outboxRepo;
+    @Mock private PromoCodeRepositoryPort promoCodeRepo;
 
     private CreateSubscriptionService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreateSubscriptionService(subscriptionRepo, planRepo, outboxRepo, new ObjectMapper());
+        service = new CreateSubscriptionService(subscriptionRepo, planRepo, outboxRepo,
+                new ObjectMapper(), promoCodeRepo);
     }
 
     @Test

@@ -2,19 +2,17 @@ package com.mini.sardis.notification.infrastructure.adapter.out.jpa;
 
 import com.mini.sardis.notification.application.port.out.NotificationRepositoryPort;
 import com.mini.sardis.notification.domain.entity.NotificationLog;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class JpaNotificationRepositoryAdapter implements NotificationRepositoryPort {
 
     private final JpaNotificationRepository jpaRepo;
-
-    public JpaNotificationRepositoryAdapter(JpaNotificationRepository jpaRepo) {
-        this.jpaRepo = jpaRepo;
-    }
 
     @Override
     public void save(NotificationLog log) {

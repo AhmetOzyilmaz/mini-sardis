@@ -1,5 +1,6 @@
 package com.mini.sardis.payment.application.port.in;
 
+import com.mini.sardis.payment.domain.value.PaymentMethod;
 import com.mini.sardis.payment.domain.value.PaymentType;
 
 import java.math.BigDecimal;
@@ -11,5 +12,11 @@ public record ProcessPaymentCommand(
         String idempotencyKey,
         BigDecimal amount,
         String currency,
-        PaymentType paymentType
-) {}
+        PaymentType paymentType,
+        PaymentMethod paymentMethod
+) {
+    public ProcessPaymentCommand(UUID subscriptionId, UUID userId, String idempotencyKey,
+                                  BigDecimal amount, String currency, PaymentType paymentType) {
+        this(subscriptionId, userId, idempotencyKey, amount, currency, paymentType, PaymentMethod.CREDIT_CARD);
+    }
+}
