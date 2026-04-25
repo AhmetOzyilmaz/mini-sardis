@@ -25,6 +25,7 @@
 15. [Kapsam Dışı / Out of Scope](#15-kapsam-dışı--out-of-scope)
 16. [Varsayımlar / Assumptions](#16-varsayımlar--assumptions)
 17. [Sözlük / Glossary](#17-sözlük--glossary)
+18. [Promosyon Kodu / Promo Code Feature](#18-promosyon-kodu--promo-code-feature)
 
 ---
 
@@ -76,6 +77,7 @@ The candidate is expected to deliver not just a working solution, but a **scalab
 | Tutarlılık | Başarısız ödemelerde sistem tutarlı kalmalı, kullanıcı bilgilendirilmelidir |
 | Otomatik yenileme | Abonelikler aylık otomatik yenilenmelidir |
 | Yüksek trafik | Gecikmeli yanıtlar ve kısmi hataları sisteme dahil etmelidir |
+| Promosyon kodları | Admin belirli bir süre geçerli indirim kodu tanımlayabilmeli; kullanıcı abonelik başlatırken kodu uygulayabilmeli |
 
 **Tahmini ölçek:** ~100K aktif kullanıcı, günlük ~10K yeni abonelik, aylık ~500K yenileme işlemi.
 
@@ -89,6 +91,7 @@ The candidate is expected to deliver not just a working solution, but a **scalab
 | Consistency | Failed payments leave system consistent; user notified |
 | Auto-renewal | Active subscriptions renew automatically each month |
 | High availability | System must tolerate delays and partial service failures |
+| Promo codes | Admin defines time-limited discount codes; user applies code at subscription creation |
 
 ---
 
@@ -139,6 +142,26 @@ The candidate is expected to deliver not just a working solution, but a **scalab
 - Scheduler runs daily at 09:00 to find due renewals.
 - Payment success: `nextRenewalDate` extended, subscription stays `ACTIVE`.
 - Payment failure: After max 3 retries (exponential backoff), subscription becomes `SUSPENDED`.
+
+### 3.5 Promosyon Kodu Uygulaması / Promo Code Redemption
+
+**TR:**
+1. Kullanıcı abonelik başlatırken isteğe bağlı `promoCode` alanını iletir.
+2. Sistem kodu doğrular: aktif mi, süresi dolmamış mı, kullanım limiti aşılmamış mı?
+3. Geçerli kod → `discountAmount` hesaplanır, aboneliğe anlık fiyat snapshot'ı olarak kaydedilir.
+4. Ödeme servisi, `finalAmount` (indirilmiş tutar) üzerinden ödeme alır.
+5. Kod kullanım sayacı (`currentUses`) +1 artırılır — abonelik kaydetme ile aynı DB transaction'ında gerçekleşir.
+6. Geçersiz/süresi dolmuş kod → 400 `InvalidPromoCode` hatası, abonelik oluşturulmaz.
+7. Promo kodu yalnızca ilk abonelikte geçerlidir; yenileme işlemlerine uygulanmaz.
+
+**EN:**
+1. User optionally provides `promoCode` in the subscription creation request.
+2. System validates: active, within date range, usage limit not exceeded.
+3. Valid code → `discountAmount` computed and snapshotted onto the subscription record.
+4. Payment service charges `finalAmount` (discounted amount).
+5. Usage counter (`currentUses`) incremented atomically within the same DB transaction as subscription save.
+6. Invalid/expired code → 400 `InvalidPromoCode` error, no subscription created.
+7. Promo codes apply to initial subscriptions only; renewals are not discounted.
 
 ### 3.4 Ödeme Başarısız Senaryosu / Payment Failure Scenarios
 
@@ -406,6 +429,7 @@ erDiagram
     SUBSCRIPTIONS ||--o{ PAYMENTS : "generates"
     SUBSCRIPTIONS ||--o{ OUTBOX_EVENTS : "produces"
     USERS ||--o{ NOTIFICATION_LOGS : "receives"
+    PROMO_CODES ||--o{ SUBSCRIPTIONS : "applied to"
 
     USERS {
         uuid id PK
@@ -432,14 +456,32 @@ erDiagram
         uuid id PK
         uuid user_id FK
         uuid plan_id FK
+        uuid promo_code_id "nullable"
         varchar status
         date start_date
         date next_renewal_date
         timestamp cancelled_at
         varchar cancellation_reason
+        decimal amount
+        decimal discount_amount
+        decimal final_amount
+        varchar currency
         int version
         timestamp created_at
         timestamp updated_at
+    }
+
+    PROMO_CODES {
+        uuid id PK
+        varchar code UK
+        varchar discount_type
+        decimal discount_value
+        int max_uses
+        int current_uses
+        boolean active
+        timestamp valid_from
+        timestamp valid_to
+        timestamp created_at
     }
 
     PAYMENTS {
@@ -929,9 +971,34 @@ Adım 5 — Notification Service
 | next_renewal_date | DATE | | Updated each renewal |
 | cancelled_at | TIMESTAMP | | |
 | cancellation_reason | VARCHAR(500) | | |
+| amount | DECIMAL(10,2) | | Original plan price snapshot |
+| currency | VARCHAR(3) | DEFAULT 'TRY' | |
+| promo_code_id | UUID | nullable | Ref to promo used (no FK — snapshot) |
+| discount_amount | DECIMAL(10,2) | NOT NULL, DEFAULT 0.00 | 0 if no promo |
+| final_amount | DECIMAL(10,2) | NOT NULL | Charged amount (= amount − discount_amount) |
 | version | INT | DEFAULT 0 | Optimistic lock `@Version` |
 | created_at | TIMESTAMP | NOT NULL | |
 | updated_at | TIMESTAMP | | |
+
+#### PromoCode
+| Alan / Field | Tip / Type | Kısıt / Constraint | Açıklama / Notes |
+|-------------|-----------|-------------------|-----------------|
+| id | UUID | PK | |
+| code | VARCHAR(20) | UNIQUE, NOT NULL | 5-20 uppercase alphanumeric |
+| discount_type | VARCHAR(20) | NOT NULL | PERCENTAGE \| FIXED_AMOUNT |
+| discount_value | DECIMAL(10,2) | NOT NULL, > 0 | % (0–100) or TRY amount |
+| max_uses | INT | nullable | null = unlimited |
+| current_uses | INT | NOT NULL, DEFAULT 0 | Incremented on use |
+| active | BOOLEAN | NOT NULL, DEFAULT true | Admin can deactivate |
+| valid_from | TIMESTAMP | nullable | null = no restriction |
+| valid_to | TIMESTAMP | nullable | null = no expiry |
+| created_at | TIMESTAMP | NOT NULL | |
+
+**Business rules:**
+- PERCENTAGE: `finalAmount = originalAmount × (1 − discountValue/100)`, minimum 0
+- FIXED_AMOUNT: `finalAmount = max(0, originalAmount − discountValue)`
+- `current_uses` is incremented in the same transaction as subscription creation (atomic)
+- No FK from subscriptions to promo_codes — the discount snapshot is the authoritative record
 
 #### Payment
 | Alan / Field | Tip / Type | Kısıt / Constraint | Açıklama / Notes |
@@ -988,6 +1055,9 @@ Adım 5 — Notification Service
 | `V6__create_notification_logs.sql` | CREATE TABLE notification_logs |
 | `V7__create_indexes.sql` | Tüm performans index'leri |
 | `V8__seed_demo_data.sql` | Demo seed data (`dev` profili) |
+| `V9__add_subscription_price_snapshot.sql` | ADD amount, currency to subscriptions; ADD currency to subscription_plans |
+| `V10__create_promo_codes.sql` | CREATE TABLE promo_codes + unique code constraint + check constraints |
+| `V11__add_promo_code_to_subscriptions.sql` | ADD promo_code_id, discount_amount, final_amount to subscriptions; backfill final_amount = amount |
 
 ### 7.3 Performans Index'leri / Performance Indexes
 
@@ -1102,6 +1172,85 @@ Headers: `X-Signature: sha256=<hmac_sha256_hash>`
 | `POST` | `/api/v1/plans` | ADMIN | Create plan |
 | `PUT` | `/api/v1/plans/{id}/deactivate` | ADMIN | Deactivate plan |
 
+### 8.6 Promo Code Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/v1/admin/promo-codes` | ADMIN | Create a promo code |
+| `GET` | `/api/v1/promo-codes/{code}/validate` | PUBLIC | Validate code and preview discount |
+
+**POST /api/v1/admin/promo-codes — Request:**
+```json
+{
+  "code": "SAVE20",
+  "discountType": "PERCENTAGE",
+  "discountValue": 20,
+  "maxUses": 100,
+  "validFrom": "2026-01-01T00:00:00",
+  "validTo": "2026-12-31T23:59:59"
+}
+```
+
+**Response 201:**
+```json
+{
+  "id": "...",
+  "code": "SAVE20",
+  "discountType": "PERCENTAGE",
+  "discountValue": 20.00,
+  "maxUses": 100,
+  "currentUses": 0,
+  "active": true,
+  "validFrom": "2026-01-01T00:00:00",
+  "validTo": "2026-12-31T23:59:59"
+}
+```
+
+**GET /api/v1/promo-codes/SAVE20/validate — Response 200:**
+```json
+{
+  "code": "SAVE20",
+  "discountType": "PERCENTAGE",
+  "discountValue": 20.00,
+  "maxUses": 100,
+  "currentUses": 5,
+  "valid": true,
+  "message": "Promo code is valid"
+}
+```
+*(Returns `"valid": false` with reason if expired, inactive, or limit reached — always HTTP 200)*
+
+**POST /api/v1/subscriptions — updated request with optional promo:**
+```json
+{
+  "planId": "660e8400-e29b-41d4-a716-446655440001",
+  "promoCode": "SAVE20"
+}
+```
+
+**Response 202 (with promo applied):**
+```json
+{
+  "subscriptionId": "...",
+  "status": "PENDING",
+  "amount": 99.99,
+  "discountAmount": 19.998,
+  "finalAmount": 79.992,
+  "message": "Aboneliğiniz oluşturuluyor / Your subscription is being created"
+}
+```
+
+**Response 400 (invalid promo code):**
+```json
+{
+  "type": "https://api.sardis.com/errors/invalid-promo-code",
+  "title": "Invalid Promo Code",
+  "status": 400,
+  "detail": "Promo code 'SAVE20' has expired",
+  "instance": "/api/v1/subscriptions"
+}
+```
+
 ### 8.5 Actuator / Health
 
 | Path | Description |
@@ -1128,6 +1277,8 @@ Headers: `X-Signature: sha256=<hmac_sha256_hash>`
 | **Rate limiting** | Bucket4j ile `/api/v1/payments/webhook` ve subscription create endpoint |
 | **SQL injection** | JPA parameterized query; native sorgu string concatenation yok |
 | **Konfigürasyon güvenliği** | Secrets env var'dan okunur; `application.properties`'e hardcode yok |
+| **Promo code yetkilendirmesi** | Kod oluşturma yalnızca `ROLE_ADMIN`; doğrulama public endpoint (token gerektirmez) |
+| **Promo code authorization** | Code creation: `ROLE_ADMIN` only via `@PreAuthorize`; validation endpoint: public (no auth required) |
 
 ### 9.2 Veri Bütünlüğü / Data Integrity
 
@@ -1198,6 +1349,8 @@ MDC: Her istekte correlationId ve userId otomatik eklenir
 - `application/service/` — her use case izole test; tüm outbound port'lar Mockito ile mock
 - `domain/service/` — pure JUnit, Spring context yok (hexagonal faydası)
 - State machine geçişleri: PENDING→ACTIVE, PENDING→CANCELLED, ACTIVE→SUSPENDED, vb.
+- `PromoCode.validate()` — inactive, expired, limit reached, all conditions met
+- `PromoCode.calculateDiscountAmount()` — PERCENTAGE, FIXED_AMOUNT, capped at original price
 - Tool: JUnit 5 + `@ExtendWith(MockitoExtension.class)`
 
 ### 10.2 Component / Integration Tests (API Seviyesi)
@@ -1213,6 +1366,9 @@ MDC: Her istekte correlationId ve userId otomatik eklenir
 | `GET /api/v1/subscriptions/{id}` | 200, doğru status |
 | `POST /api/v1/payments/webhook` | 200, ACTIVE/CANCELLED geçişi |
 | `GET /api/v1/notifications?userId=` | 200, bildirim listesi |
+| `POST /api/v1/admin/promo-codes` (ADMIN) | 201, promo code in DB |
+| `GET /api/v1/promo-codes/{code}/validate` | 200, `valid=true` |
+| `POST /api/v1/subscriptions` with `promoCode` | 202, `discount_amount` + `final_amount` set, `current_uses` incremented |
 
 **Error & edge case:**
 
@@ -1224,6 +1380,10 @@ MDC: Her istekte correlationId ve userId otomatik eklenir
 | Duplicate idempotencyKey webhook | 200, state değişmez |
 | Invalid HMAC signature | 401 |
 | Concurrent update (`@Version`) | OptimisticLockException, veri tutarlı |
+| Invalid promo code (expired) | 400 INVALID_PROMO_CODE |
+| Non-existent promo code | 400 INVALID_PROMO_CODE |
+| `POST /api/v1/admin/promo-codes` as ROLE_USER | 403 |
+| Promo code at `max_uses` limit | 400 INVALID_PROMO_CODE |
 
 **Auth tests:**
 
@@ -1360,6 +1520,8 @@ Repo içerisinde aşağıdaki dokümanların yer alması beklenir:
 | OAuth2 / sosyal giriş | JWT yeterli, SSO kapsam dışı |
 | Multi-tenant | Tek şirket, tek tenant |
 | Event sourcing | Audit trail gereksinimsiz, not added |
+| Promo referral/affiliate | Promo code referral tracking kapsam dışı; kodlar bağımsız |
+| Renewal discount | Promo kodları yalnızca ilk abonelikte; yenileme fiyatlaması değişmez |
 
 ---
 
@@ -1395,6 +1557,72 @@ Repo içerisinde aşağıdaki dokümanların yer alması beklenir:
 | **Adapter** | Port'u gerçekleştiren altyapı sınıfı (JPA, Kafka, REST) |
 | **MapStruct** | Compile-time tip-güvenli Java mapper üreticisi |
 | **Value Object** | Identity'siz, immutable, değer eşitliğiyle karşılaştırılan domain nesnesi |
+| **Promo Code / Promosyon Kodu** | Admin tarafından tanımlanan, indirim sağlayan sınırlı kullanımlı veya süre kısıtlı kod |
+| **Discount Snapshot** | Abonelik oluşturulurken kaydedilen indirim tutarı — sonraki fiyat değişimlerinden etkilenmez |
+| **finalAmount** | İndirim uygulandıktan sonra ödeme servisinin tahsil ettiği tutar (= amount − discountAmount) |
+
+---
+
+---
+
+## 18. Promosyon Kodu / Promo Code Feature
+
+### 18.1 Genel Bakış / Overview
+
+**TR:** Admin yöneticiler belirli bir süre geçerli veya kullanım limiti olan promosyon kodları tanımlayabilir. Kullanıcılar abonelik başlatırken bu kodları uygulayarak indirimli fiyattan yararlanabilir. İndirim tutarı ve nihai tutar abonelik kaydına snapshot olarak yazılır; ödeme servisi nihai tutarı (`finalAmount`) tahsil eder.
+
+**EN:** Admin users can define promo codes with optional time limits or usage caps. Users apply codes at subscription creation to receive a discounted price. The discount amount and final amount are snapshotted onto the subscription record; the payment service charges `finalAmount`.
+
+### 18.2 İndirim Türleri / Discount Types
+
+| Tür / Type | Örnek / Example | Hesaplama / Calculation |
+|-----------|----------------|------------------------|
+| `PERCENTAGE` | 20% | `finalAmount = originalAmount × (1 − value/100)` |
+| `FIXED_AMOUNT` | 30 TRY | `finalAmount = max(0, originalAmount − value)` |
+
+### 18.3 Promo Kodu Akışı / Promo Code Flow
+
+```mermaid
+flowchart TD
+    A["POST /api/v1/subscriptions"] --> B{promoCode provided?}
+    B -- No --> C[Use originalAmount as finalAmount]
+    B -- Yes --> D[Look up PromoCode by code]
+    D --> E{Code found?}
+    E -- No --> F[400 InvalidPromoCodeException]
+    E -- Yes --> G{"validate: active\n+ date range\n+ usage limit"}
+    G -- Invalid --> F
+    G -- Valid --> H[calculateDiscountAmount]
+    H --> I["incrementUse + save PromoCode\n(same TX as subscription)"]
+    I --> J[Subscription.createWithPromo]
+    C --> K[Subscription.create]
+    J --> L["Save Subscription + OutboxEvent\nin single DB transaction"]
+    K --> L
+    L --> M[202 Accepted with discount info]
+```
+
+### 18.4 Saga Akışında Promo Kodu / Promo Code in the Saga
+
+Outbox payload `subscription.created.v1` artık üç alanı içerir:
+
+| Alan / Field | Açıklama / Notes |
+|-------------|-----------------|
+| `amount` | Orijinal plan fiyatı — audit için korunur |
+| `discountAmount` | Uygulanan indirim tutarı |
+| `finalAmount` | Ödeme servisinin tahsil ettiği tutar |
+
+Payment Service geriye uyumluluk için: `node.has("finalAmount")` kontrolü yaparak `finalAmount` yoksa `amount` değerini kullanır.
+
+### 18.5 Yetki Modeli / Authorization Model
+
+| İşlem / Action | Yetki / Auth |
+|---------------|-------------|
+| Promo kodu oluştur / Create code | `ROLE_ADMIN` — `@PreAuthorize("hasRole('ADMIN')")` |
+| Promo kodu doğrula / Validate code | Public — token gerektirmez / no auth required |
+| Promolu abonelik başlat / Subscribe with promo | `ROLE_USER` (normal subscription flow) |
+
+### 18.6 Eşzamanlılık Notu / Concurrency Note
+
+`current_uses` sayacı abonelik oluşturma transaction'ı içinde artırılır. Yüksek eşzamanlılık senaryolarında (aynı anda birden fazla kullanıcı aynı `maxUses` limitine yakın kodla işlem yapıyorsa), `PromoCodeJpaEntity`'e `@Version int version` eklemek suretiyle optimistik kilitleme yapılması önerilir.
 
 ---
 

@@ -3,7 +3,7 @@ package com.mini.sardis.payment.infrastructure.adapter.in.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mini.sardis.payment.application.port.in.HandleWebhookCommand;
 import com.mini.sardis.payment.application.port.in.HandleWebhookUseCase;
-import com.mini.sardis.payment.infrastructure.security.WebhookSignatureVerifier;
+import com.mini.sardis.common.security.WebhookSignatureVerifier;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;

@@ -62,6 +62,9 @@ public class JpaSubscriptionRepositoryAdapter implements SubscriptionRepositoryP
                 .updatedAt(s.getUpdatedAt())
                 .amount(s.getAmount())
                 .currency(s.getCurrency())
+                .promoCodeId(s.getPromoCodeId())
+                .discountAmount(s.getDiscountAmount())
+                .finalAmount(s.getFinalAmount())
                 .build();
     }
 
@@ -81,6 +84,9 @@ public class JpaSubscriptionRepositoryAdapter implements SubscriptionRepositoryP
                 .updatedAt(e.getUpdatedAt())
                 .amount(e.getAmount())
                 .currency(e.getCurrency())
+                .promoCodeId(e.getPromoCodeId())
+                .discountAmount(e.getDiscountAmount())
+                .finalAmount(e.getFinalAmount())
                 .build();
     }
 }

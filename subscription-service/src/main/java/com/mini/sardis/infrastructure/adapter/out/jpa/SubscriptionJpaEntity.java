@@ -52,10 +52,19 @@ public class SubscriptionJpaEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Price snapshot — stored as extra columns (not in base migration; added via alter or embedded)
+    // Price snapshot — stored as extra columns
     @Column(precision = 10, scale = 2)
     private BigDecimal amount;
 
     @Column(length = 3)
     private String currency;
+
+    @Column(name = "promo_code_id")
+    private UUID promoCodeId;
+
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount;
+
+    @Column(name = "final_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal finalAmount;
 }

@@ -3,7 +3,6 @@ package com.mini.sardis.infrastructure.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
@@ -14,11 +13,7 @@ import java.util.Map;
 @Component
 public class ProblemJsonAuthEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper objectMapper;
-
-    public ProblemJsonAuthEntryPoint(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Override
     public void commence(HttpServletRequest request,
@@ -35,6 +30,6 @@ public class ProblemJsonAuthEntryPoint implements AuthenticationEntryPoint {
                 "instance", request.getRequestURI()
         );
 
-        objectMapper.writeValue(response.getWriter(), body);
+        MAPPER.writeValue(response.getWriter(), body);
     }
 }

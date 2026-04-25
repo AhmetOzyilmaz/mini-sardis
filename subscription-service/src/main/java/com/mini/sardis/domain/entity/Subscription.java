@@ -22,9 +22,12 @@ public class Subscription {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Carry price snapshot so Payment Service knows what to charge
+    // Price snapshot so Payment Service knows what to charge
     private final BigDecimal amount;
     private final String currency;
+    private final UUID promoCodeId;
+    private final BigDecimal discountAmount;
+    private final BigDecimal finalAmount;
 
     private Subscription(Builder b) {
         this.id = b.id;
@@ -41,6 +44,9 @@ public class Subscription {
         this.updatedAt = b.updatedAt;
         this.amount = b.amount;
         this.currency = b.currency;
+        this.promoCodeId = b.promoCodeId;
+        this.discountAmount = b.discountAmount;
+        this.finalAmount = b.finalAmount;
     }
 
     public static Subscription create(UUID userId, UUID planId, BigDecimal amount, String currency) {
@@ -51,6 +57,27 @@ public class Subscription {
                 .status(SubscriptionStatus.PENDING)
                 .amount(amount)
                 .currency(currency)
+                .discountAmount(BigDecimal.ZERO)
+                .finalAmount(amount)
+                .version(0)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static Subscription createWithPromo(UUID userId, UUID planId, BigDecimal amount,
+                                               String currency, UUID promoCodeId,
+                                               BigDecimal discountAmount) {
+        BigDecimal finalAmt = amount.subtract(discountAmount).max(BigDecimal.ZERO);
+        return new Builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .planId(planId)
+                .status(SubscriptionStatus.PENDING)
+                .amount(amount)
+                .currency(currency)
+                .promoCodeId(promoCodeId)
+                .discountAmount(discountAmount)
+                .finalAmount(finalAmt)
                 .version(0)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -110,6 +137,9 @@ public class Subscription {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public BigDecimal getAmount() { return amount; }
     public String getCurrency() { return currency; }
+    public UUID getPromoCodeId() { return promoCodeId; }
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public BigDecimal getFinalAmount() { return finalAmount; }
 
     public static Builder builder() { return new Builder(); }
 
@@ -128,6 +158,9 @@ public class Subscription {
         private LocalDateTime updatedAt;
         private BigDecimal amount;
         private String currency;
+        private UUID promoCodeId;
+        private BigDecimal discountAmount;
+        private BigDecimal finalAmount;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder userId(UUID userId) { this.userId = userId; return this; }
@@ -143,6 +176,9 @@ public class Subscription {
         public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
         public Builder amount(BigDecimal amount) { this.amount = amount; return this; }
         public Builder currency(String currency) { this.currency = currency; return this; }
+        public Builder promoCodeId(UUID promoCodeId) { this.promoCodeId = promoCodeId; return this; }
+        public Builder discountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; return this; }
+        public Builder finalAmount(BigDecimal finalAmount) { this.finalAmount = finalAmount; return this; }
         public Subscription build() { return new Subscription(this); }
     }
 }

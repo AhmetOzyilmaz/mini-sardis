@@ -35,12 +35,15 @@ public class SubscriptionEventListener {
             UUID subscriptionId = UUID.fromString(node.get("subscriptionId").asText());
             UUID userId = UUID.fromString(node.get("userId").asText());
             BigDecimal amount = new BigDecimal(node.get("amount").asText());
+            BigDecimal finalAmount = node.has("finalAmount")
+                    ? new BigDecimal(node.get("finalAmount").asText())
+                    : amount;
             String currency = node.get("currency").asText();
             String idempotencyKey = node.get("idempotencyKey").asText();
 
             log.info("Received subscription.created.v1 for subscriptionId={}", subscriptionId);
             processPaymentUseCase.execute(new ProcessPaymentCommand(
-                    subscriptionId, userId, idempotencyKey, amount, currency, PaymentType.INITIAL));
+                    subscriptionId, userId, idempotencyKey, finalAmount, currency, PaymentType.INITIAL));
         } catch (Exception e) {
             log.error("Error processing subscription.created.v1: {}", e.getMessage(), e);
         }

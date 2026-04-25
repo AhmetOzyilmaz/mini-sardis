@@ -44,7 +44,7 @@ public class SubscriptionController {
             @RequestHeader("Authorization") String authHeader) {
         UUID userId = extractUserId(authHeader);
         SubscriptionResult result = createUseCase.execute(
-                new CreateSubscriptionCommand(userId, request.planId()));
+                new CreateSubscriptionCommand(userId, request.planId(), request.promoCode()));
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(SubscriptionResponse.from(result));
     }
 

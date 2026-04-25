@@ -42,6 +42,7 @@ public class GetSubscriptionService implements GetSubscriptionUseCase {
 
     private SubscriptionResult toResult(Subscription s) {
         return new SubscriptionResult(s.getId(), s.getUserId(), s.getPlanId(),
-                s.getStatus(), s.getStartDate(), s.getNextRenewalDate(), s.getCreatedAt());
+                s.getStatus(), s.getStartDate(), s.getNextRenewalDate(), s.getCreatedAt(),
+                s.getAmount(), s.getDiscountAmount(), s.getFinalAmount());
     }
 }
