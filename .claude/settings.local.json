@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf \"/c/Users/ASUS/Desktop/turkcell/mini-sardis/notification-service/.git\")",
+      "Bash(rm -rf \"/c/Users/ASUS/Desktop/turkcell/mini-sardis/payment-service/.git\")",
+      "Bash(git mv *)",
+      "Bash(xargs grep *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(docker compose *)",
+      "Bash(docker pull *)",
+      "Bash(docker exec *)",
+      "Bash(./gradlew build *)",
+      "Read(//c/Program Files/Java//**)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files/Microsoft//**)",
+      "Bash(java -version)"
+    ]
+  }
+}
