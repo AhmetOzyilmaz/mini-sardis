@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@Profile({"dev", "default"})
+@Profile("!componentTest")
 public class DataInitializer implements ApplicationRunner {
 
     private final UserRepositoryPort userRepository;
