@@ -1,5 +1,6 @@
 package com.mini.sardis.payment.infrastructure.adapter.in.web;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mini.sardis.payment.BaseComponentTest;
 import com.mini.sardis.payment.domain.value.PaymentMethod;
@@ -10,8 +11,7 @@ import com.mini.sardis.payment.infrastructure.adapter.out.jpa.PaymentJpaEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.*;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -21,11 +21,8 @@ import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Transactional
 class PaymentApiComponentTest extends BaseComponentTest {
 
     @Autowired JpaPaymentRepository paymentRepo;
@@ -35,11 +32,12 @@ class PaymentApiComponentTest extends BaseComponentTest {
     String webhookSecret;
 
     @Test
-    void getPaymentHistory_emptyForUnknownSubscription() throws Exception {
-        mockMvc.perform(get("/api/v1/payments/subscription/" + UUID.randomUUID()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(0)));
+    void getPaymentHistory_emptyForUnknownSubscription() {
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "/api/v1/payments/subscription/" + UUID.randomUUID(), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo("[]");
     }
 
     @Test
@@ -47,12 +45,15 @@ class PaymentApiComponentTest extends BaseComponentTest {
         UUID subscriptionId = UUID.randomUUID();
         paymentRepo.save(buildEntity(subscriptionId, PaymentStatus.SUCCESS, PaymentMethod.CREDIT_CARD));
 
-        mockMvc.perform(get("/api/v1/payments/subscription/" + subscriptionId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].status").value("SUCCESS"))
-                .andExpect(jsonPath("$[0].paymentMethod").value("CREDIT_CARD"))
-                .andExpect(jsonPath("$[0].amount").value(99.99));
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "/api/v1/payments/subscription/" + subscriptionId, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.size()).isEqualTo(1);
+        assertThat(body.get(0).get("status").asText()).isEqualTo("SUCCESS");
+        assertThat(body.get(0).get("paymentMethod").asText()).isEqualTo("CREDIT_CARD");
+        assertThat(body.get(0).get("amount").decimalValue()).isEqualByComparingTo("99.99");
     }
 
     @Test
@@ -61,9 +62,12 @@ class PaymentApiComponentTest extends BaseComponentTest {
         paymentRepo.save(buildEntity(subscriptionId, PaymentStatus.FAILED, PaymentMethod.CREDIT_CARD));
         paymentRepo.save(buildEntity(subscriptionId, PaymentStatus.SUCCESS, PaymentMethod.BANK_TRANSFER));
 
-        mockMvc.perform(get("/api/v1/payments/subscription/" + subscriptionId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "/api/v1/payments/subscription/" + subscriptionId, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.size()).isEqualTo(2);
     }
 
     @Test
@@ -73,27 +77,38 @@ class PaymentApiComponentTest extends BaseComponentTest {
         paymentRepo.save(buildEntity(subA, PaymentStatus.SUCCESS, PaymentMethod.DIGITAL_WALLET));
         paymentRepo.save(buildEntity(subB, PaymentStatus.SUCCESS, PaymentMethod.DEBIT_CARD));
 
-        mockMvc.perform(get("/api/v1/payments/subscription/" + subA))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].paymentMethod").value("DIGITAL_WALLET"));
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "/api/v1/payments/subscription/" + subA, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = objectMapper.readTree(response.getBody());
+        assertThat(body.size()).isEqualTo(1);
+        assertThat(body.get(0).get("paymentMethod").asText()).isEqualTo("DIGITAL_WALLET");
     }
 
     @Test
-    void webhook_missingSignature_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/payments/webhook")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"idempotencyKey\":\"key-1\",\"success\":true}"))
-                .andExpect(status().isUnauthorized());
+    void webhook_missingSignature_returns401() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>("{\"idempotencyKey\":\"key-1\",\"success\":true}", headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/payments/webhook", HttpMethod.POST, request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
-    void webhook_invalidSignature_returns401() throws Exception {
-        mockMvc.perform(post("/api/v1/payments/webhook")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("X-Signature", "invalid-signature-value")
-                .content("{\"idempotencyKey\":\"key-1\",\"success\":true}"))
-                .andExpect(status().isUnauthorized());
+    void webhook_invalidSignature_returns401() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Signature", "invalid-signature-value");
+        HttpEntity<String> request = new HttpEntity<>("{\"idempotencyKey\":\"key-1\",\"success\":true}", headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/payments/webhook", HttpMethod.POST, request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
@@ -102,11 +117,15 @@ class PaymentApiComponentTest extends BaseComponentTest {
                 new WebhookRequest("nonexistent-key", "ext-ref", true, null));
         String signature = computeHmac(body);
 
-        mockMvc.perform(post("/api/v1/payments/webhook")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("X-Signature", signature)
-                .content(body))
-                .andExpect(status().isBadRequest());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Signature", signature);
+        HttpEntity<String> request = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/payments/webhook", HttpMethod.POST, request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -121,11 +140,15 @@ class PaymentApiComponentTest extends BaseComponentTest {
                 new WebhookRequest(idempotencyKey, "ext-ref-ok", true, null));
         String signature = computeHmac(body);
 
-        mockMvc.perform(post("/api/v1/payments/webhook")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("X-Signature", signature)
-                .content(body))
-                .andExpect(status().isOk());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Signature", signature);
+        HttpEntity<String> request = new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/payments/webhook", HttpMethod.POST, request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private PaymentJpaEntity buildEntity(UUID subscriptionId, PaymentStatus status, PaymentMethod method) {

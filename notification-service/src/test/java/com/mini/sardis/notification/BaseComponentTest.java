@@ -2,16 +2,24 @@ package com.mini.sardis.notification;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.client.ResponseErrorHandler;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+
+import java.io.IOException;
+import java.net.URI;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("componentTest")
@@ -30,6 +38,18 @@ import org.springframework.test.context.TestPropertySource;
 @Slf4j
 public abstract class BaseComponentTest {
 
-    @Autowired
-    protected TestRestTemplate restTemplate;
+    @LocalServerPort
+    private int port;
+
+    protected RestTemplate restTemplate;
+
+    @BeforeAll
+    void setUpRestTemplate() {
+        restTemplate = new RestTemplate();
+        restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory("http://localhost:" + port));
+        restTemplate.setErrorHandler(new ResponseErrorHandler() {
+            @Override public boolean hasError(ClientHttpResponse r) throws IOException { return false; }
+            @Override public void handleError(URI url, HttpMethod method, ClientHttpResponse r) throws IOException {}
+        });
+    }
 }
