@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mini.sardis.payment.PaymentServiceApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-04-25T21:02:19.520Z" hostname="DESKTOP-MFFJA06" time="0.229">
-  <properties/>
-  <testcase name="contextLoads()" classname="com.mini.sardis.payment.PaymentServiceApplicationTests" time="0.068"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

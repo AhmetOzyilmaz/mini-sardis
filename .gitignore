@@ -27,6 +27,10 @@ replay_pid*
 # Gradle build cache
 .gradle/
 
+# Gradle build output
+build/
+*/build/
+
 # IDE — IntelliJ IDEA
 .idea/
 *.iml
