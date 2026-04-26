@@ -16,4 +16,12 @@ public interface JpaSubscriptionRepository extends JpaRepository<SubscriptionJpa
     List<SubscriptionJpaEntity> findDueForRenewal(
             @Param("status") SubscriptionStatus status,
             @Param("asOf") LocalDate asOf);
+
+    @Query("SELECT s FROM SubscriptionJpaEntity s WHERE s.status = :status AND s.gracePeriodEndDate < :asOf")
+    List<SubscriptionJpaEntity> findExpiredGracePeriods(
+            @Param("status") SubscriptionStatus status,
+            @Param("asOf") LocalDate asOf);
+
+    @Query("SELECT s FROM SubscriptionJpaEntity s WHERE s.cancelAtPeriodEnd = true AND s.nextRenewalDate <= :asOf AND s.status <> 'CANCELLED'")
+    List<SubscriptionJpaEntity> findPendingCancelAtPeriodEnd(@Param("asOf") LocalDate asOf);
 }

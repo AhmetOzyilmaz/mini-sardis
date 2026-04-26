@@ -4,6 +4,7 @@ import com.mini.sardis.application.port.in.subscription.*;
 import com.mini.sardis.infrastructure.adapter.in.web.dto.CreateSubscriptionRequest;
 import com.mini.sardis.infrastructure.adapter.in.web.dto.SubscriptionResponse;
 import com.mini.sardis.infrastructure.security.JwtTokenProvider;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ public class SubscriptionController {
     private final CreateSubscriptionUseCase createUseCase;
     private final CancelSubscriptionUseCase cancelUseCase;
     private final GetSubscriptionUseCase getUseCase;
+    private final ReactivateSubscriptionUseCase reactivateUseCase;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Operation(summary = "Create a new subscription (returns 202 while payment is pending)")
@@ -68,10 +70,22 @@ public class SubscriptionController {
     public ResponseEntity<Void> cancel(
             @PathVariable UUID id,
             @RequestParam(defaultValue = "user_request") String reason,
+            @Parameter(description = "If true, cancellation is deferred until the end of the current billing period")
+            @RequestParam(defaultValue = "false") boolean cancelAtPeriodEnd,
             @RequestHeader("Authorization") String authHeader) {
         UUID userId = extractUserId(authHeader);
-        cancelUseCase.execute(id, userId, reason);
+        cancelUseCase.execute(id, userId, reason, cancelAtPeriodEnd);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reactivate a suspended or grace-period subscription")
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<SubscriptionResponse> reactivate(
+            @PathVariable UUID id,
+            @RequestHeader("Authorization") String authHeader) {
+        UUID userId = extractUserId(authHeader);
+        SubscriptionResult result = reactivateUseCase.execute(id, userId);
+        return ResponseEntity.ok(SubscriptionResponse.from(result));
     }
 
     private UUID extractUserId(String authHeader) {

@@ -10,6 +10,7 @@ import com.mini.sardis.domain.entity.OutboxEvent;
 import com.mini.sardis.domain.entity.Subscription;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,9 @@ public class HandlePaymentFailedService implements HandlePaymentFailedUseCase {
     private final OutboxRepositoryPort outboxRepo;
     private final ObjectMapper objectMapper;
 
+    @Value("${app.grace-period.days:3}")
+    private int gracePeriodDays;
+
     @Override
     @Transactional
     public void execute(UUID subscriptionId, String paymentType, String reason) {
@@ -33,9 +37,9 @@ public class HandlePaymentFailedService implements HandlePaymentFailedUseCase {
 
         String eventType;
         if ("RENEWAL".equals(paymentType)) {
-            subscription.suspend();
-            eventType = "subscription.suspended.v1";
-            log.info("Subscription suspended after renewal failure: {}", subscriptionId);
+            subscription.enterGracePeriod(gracePeriodDays);
+            eventType = "subscription.grace_period.v1";
+            log.info("Subscription entered grace period after renewal failure: {}", subscriptionId);
         } else {
             subscription.cancel("payment_failed: " + reason);
             eventType = "subscription.failed.v1";
@@ -49,12 +53,15 @@ public class HandlePaymentFailedService implements HandlePaymentFailedUseCase {
 
     private String buildPayload(Subscription s, String reason) {
         try {
-            return objectMapper.writeValueAsString(Map.of(
-                    "subscriptionId", s.getId().toString(),
-                    "userId", s.getUserId().toString(),
-                    "reason", reason != null ? reason : "unknown",
-                    "status", s.getStatus().name()
-            ));
+            var payload = new java.util.HashMap<String, Object>();
+            payload.put("subscriptionId", s.getId().toString());
+            payload.put("userId", s.getUserId().toString());
+            payload.put("reason", reason != null ? reason : "unknown");
+            payload.put("status", s.getStatus().name());
+            if (s.getGracePeriodEndDate() != null) {
+                payload.put("gracePeriodEndDate", s.getGracePeriodEndDate().toString());
+            }
+            return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize outbox payload", e);
         }

@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -44,6 +45,18 @@ public class JpaSubscriptionRepositoryAdapter implements SubscriptionRepositoryP
                 .stream().map(this::toDomain).toList();
     }
 
+    @Override
+    public List<Subscription> findExpiredGracePeriods(LocalDate asOf) {
+        return jpaRepo.findExpiredGracePeriods(SubscriptionStatus.GRACE_PERIOD, asOf)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Subscription> findPendingCancelAtPeriodEnd(LocalDate asOf) {
+        return jpaRepo.findPendingCancelAtPeriodEnd(asOf)
+                .stream().map(this::toDomain).toList();
+    }
+
     private SubscriptionJpaEntity toJpa(Subscription s) {
         return SubscriptionJpaEntity.builder()
                 .id(s.getId())
@@ -55,6 +68,8 @@ public class JpaSubscriptionRepositoryAdapter implements SubscriptionRepositoryP
                 .nextRenewalDate(s.getNextRenewalDate())
                 .cancelledAt(s.getCancelledAt())
                 .cancellationReason(s.getCancellationReason())
+                .gracePeriodEndDate(s.getGracePeriodEndDate())
+                .cancelAtPeriodEnd(s.isCancelAtPeriodEnd())
                 .version(s.getVersion())
                 .createdAt(s.getCreatedAt())
                 .updatedAt(s.getUpdatedAt())
@@ -77,6 +92,8 @@ public class JpaSubscriptionRepositoryAdapter implements SubscriptionRepositoryP
                 .nextRenewalDate(e.getNextRenewalDate())
                 .cancelledAt(e.getCancelledAt())
                 .cancellationReason(e.getCancellationReason())
+                .gracePeriodEndDate(e.getGracePeriodEndDate())
+                .cancelAtPeriodEnd(e.isCancelAtPeriodEnd())
                 .version(e.getVersion())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())

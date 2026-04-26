@@ -11,6 +11,7 @@ import com.mini.sardis.application.port.out.OutboxRepositoryPort;
 import com.mini.sardis.application.port.out.PromoCodeRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionPlanRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
+import com.mini.sardis.application.port.out.UserPromoCodeRepositoryPort;
 import com.mini.sardis.domain.entity.OutboxEvent;
 import com.mini.sardis.domain.entity.PromoCode;
 import com.mini.sardis.domain.entity.Subscription;
@@ -32,6 +33,7 @@ public class CreateSubscriptionService implements CreateSubscriptionUseCase {
     private final OutboxRepositoryPort outboxRepo;
     private final ObjectMapper objectMapper;
     private final PromoCodeRepositoryPort promoCodeRepo;
+    private final UserPromoCodeRepositoryPort userPromoCodeRepo;
 
     @Override
     @Transactional
@@ -54,6 +56,11 @@ public class CreateSubscriptionService implements CreateSubscriptionUseCase {
             BigDecimal discount = promo.calculateDiscountAmount(price);
             promo.incrementUse();
             promoCodeRepo.save(promo);
+            userPromoCodeRepo.findByUserIdAndCode(command.userId(), promo.getCode())
+                    .ifPresent(upc -> {
+                        upc.markUsed();
+                        userPromoCodeRepo.save(upc);
+                    });
             subscription = Subscription.createWithPromo(
                     command.userId(), plan.getId(), price, currency, promo.getId(), discount);
         } else {

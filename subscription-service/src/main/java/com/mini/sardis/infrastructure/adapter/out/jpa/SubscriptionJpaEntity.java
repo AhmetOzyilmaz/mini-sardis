@@ -42,6 +42,12 @@ public class SubscriptionJpaEntity {
     @Column(name = "cancellation_reason", length = 500)
     private String cancellationReason;
 
+    @Column(name = "grace_period_end_date")
+    private LocalDate gracePeriodEndDate;
+
+    @Column(name = "cancel_at_period_end", nullable = false)
+    private boolean cancelAtPeriodEnd;
+
     @Version
     @Column(nullable = false)
     private int version;

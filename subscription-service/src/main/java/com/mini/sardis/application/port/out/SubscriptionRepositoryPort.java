@@ -13,4 +13,6 @@ public interface SubscriptionRepositoryPort {
     List<Subscription> findByUserId(UUID userId);
     List<Subscription> findAll();
     List<Subscription> findDueForRenewal(LocalDate asOf);
+    List<Subscription> findExpiredGracePeriods(LocalDate asOf);
+    List<Subscription> findPendingCancelAtPeriodEnd(LocalDate asOf);
 }

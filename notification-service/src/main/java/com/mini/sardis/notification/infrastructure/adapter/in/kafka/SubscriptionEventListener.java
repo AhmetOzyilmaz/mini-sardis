@@ -46,6 +46,11 @@ public class SubscriptionEventListener {
         handle(payload, "subscription.suspended.v1");
     }
 
+    @KafkaListener(topics = "subscription.grace_period.v1", groupId = "notification-sender")
+    public void onSubscriptionGracePeriod(@Payload String payload) {
+        handle(payload, "subscription.grace_period.v1");
+    }
+
     private void handle(String payload, String topic) {
         try {
             JsonNode node = objectMapper.readTree(payload);

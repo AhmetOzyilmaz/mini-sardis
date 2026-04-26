@@ -11,4 +11,10 @@ public interface JpaOutboxRepository extends JpaRepository<OutboxEventJpaEntity,
 
     @Query("SELECT e FROM OutboxEventJpaEntity e WHERE e.processed = false ORDER BY e.createdAt ASC LIMIT :limit")
     List<OutboxEventJpaEntity> findUnprocessed(@Param("limit") int limit);
+
+    @Query("SELECT e FROM OutboxEventJpaEntity e WHERE e.aggregateId = :aggregateId ORDER BY e.createdAt DESC")
+    List<OutboxEventJpaEntity> findByAggregateIdOrderByCreatedAtDesc(@Param("aggregateId") UUID aggregateId);
+
+    @Query("SELECT e FROM OutboxEventJpaEntity e WHERE e.aggregateId IN :aggregateIds ORDER BY e.createdAt DESC")
+    List<OutboxEventJpaEntity> findByAggregateIdIn(@Param("aggregateIds") List<UUID> aggregateIds);
 }

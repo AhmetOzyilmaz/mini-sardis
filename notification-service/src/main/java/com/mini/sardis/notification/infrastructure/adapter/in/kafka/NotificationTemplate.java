@@ -34,6 +34,14 @@ record NotificationTemplate(NotificationChannel channel, String subject, String 
                             "Ödemeniz alınamadı ve aboneliğiniz askıya alındı. Lütfen kart bilgilerinizi güncelleyin."),
                     sms("Odeme alinamadi. Aboneliginiz askiya alindi. Kart bilgilerinizi guncelleyin."));
 
+            case "subscription.grace_period.v1" -> {
+                String graceEnd = node.path("gracePeriodEndDate").asText("—");
+                yield List.of(
+                        email("Ödeme alınamadı — Grace Period başladı / Grace Period Started",
+                                "Yenileme ödemeniz alınamadı. " + graceEnd + " tarihine kadar ödeme yapmazsanız aboneliğiniz iptal edilecektir."),
+                        sms("Odeme alinamadi. " + graceEnd + " tarihine kadar odeme yapmazsiniz aboneliginiz iptal edilir."));
+            }
+
             default -> List.of(
                     email("Bildirim / Notification",
                             "Aboneliğinizle ilgili bir güncelleme var."));

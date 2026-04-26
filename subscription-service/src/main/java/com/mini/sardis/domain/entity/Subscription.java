@@ -24,6 +24,9 @@ public class Subscription {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private LocalDate gracePeriodEndDate;
+    private boolean cancelAtPeriodEnd;
+
     // Price snapshot so Payment Service knows what to charge
     private final BigDecimal amount;
     private final String currency;
@@ -41,6 +44,8 @@ public class Subscription {
         this.nextRenewalDate = b.nextRenewalDate;
         this.cancelledAt = b.cancelledAt;
         this.cancellationReason = b.cancellationReason;
+        this.gracePeriodEndDate = b.gracePeriodEndDate;
+        this.cancelAtPeriodEnd = b.cancelAtPeriodEnd;
         this.version = b.version;
         this.createdAt = b.createdAt;
         this.updatedAt = b.updatedAt;
@@ -86,13 +91,51 @@ public class Subscription {
     }
 
     public void activate(int durationDays) {
-        if (status != SubscriptionStatus.PENDING && status != SubscriptionStatus.SUSPENDED) {
+        if (status != SubscriptionStatus.PENDING
+                && status != SubscriptionStatus.SUSPENDED
+                && status != SubscriptionStatus.GRACE_PERIOD) {
             throw new IllegalStateException("Cannot activate from status: " + status);
         }
         this.status = SubscriptionStatus.ACTIVE;
+        this.gracePeriodEndDate = null;
+        this.cancelAtPeriodEnd = false;
         this.startDate = LocalDate.now();
         this.nextRenewalDate = LocalDate.now().plusDays(durationDays);
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void enterGracePeriod(int gracePeriodDays) {
+        if (status != SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot enter grace period from status: " + status);
+        }
+        this.status = SubscriptionStatus.GRACE_PERIOD;
+        this.gracePeriodEndDate = LocalDate.now().plusDays(gracePeriodDays);
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void reactivate() {
+        if (status != SubscriptionStatus.SUSPENDED && status != SubscriptionStatus.GRACE_PERIOD) {
+            throw new IllegalStateException("Cannot reactivate from status: " + status);
+        }
+        this.status = SubscriptionStatus.ACTIVE;
+        this.gracePeriodEndDate = null;
+        this.cancelAtPeriodEnd = false;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void scheduleCancelAtPeriodEnd(String reason) {
+        if (status == SubscriptionStatus.CANCELLED) {
+            throw new IllegalStateException("Subscription already cancelled");
+        }
+        this.cancelAtPeriodEnd = true;
+        this.cancellationReason = reason;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isGracePeriodExpired() {
+        return status == SubscriptionStatus.GRACE_PERIOD
+                && gracePeriodEndDate != null
+                && LocalDate.now().isAfter(gracePeriodEndDate);
     }
 
     public void cancel(String reason) {
@@ -137,6 +180,8 @@ public class Subscription {
         private LocalDate nextRenewalDate;
         private LocalDateTime cancelledAt;
         private String cancellationReason;
+        private LocalDate gracePeriodEndDate;
+        private boolean cancelAtPeriodEnd;
         private int version = 0;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -155,6 +200,8 @@ public class Subscription {
         public Builder nextRenewalDate(LocalDate nextRenewalDate) { this.nextRenewalDate = nextRenewalDate; return this; }
         public Builder cancelledAt(LocalDateTime cancelledAt) { this.cancelledAt = cancelledAt; return this; }
         public Builder cancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; return this; }
+        public Builder gracePeriodEndDate(LocalDate gracePeriodEndDate) { this.gracePeriodEndDate = gracePeriodEndDate; return this; }
+        public Builder cancelAtPeriodEnd(boolean cancelAtPeriodEnd) { this.cancelAtPeriodEnd = cancelAtPeriodEnd; return this; }
         public Builder version(int version) { this.version = version; return this; }
         public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
