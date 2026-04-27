@@ -1,7 +1,7 @@
 # Deployment Guide / Dağıtım Kılavuzu
 
 > **Proje / Project:** Abonelik Yönetim Sistemi / Subscription Management System  
-> **Stack:** Spring Boot 4.x · Java 17 · Apache Kafka · H2 / PostgreSQL · Docker Compose
+> **Stack:** Spring Boot 4.x · Java 21 · Apache Kafka · H2 / PostgreSQL · Docker Compose
 
 ---
 

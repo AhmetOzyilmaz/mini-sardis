@@ -75,7 +75,7 @@ com.mini.sardis.
 
 ### Dependencies in `build.gradle` (current)
 
-Spring Boot 4.0.5 · Spring Data JPA · Spring WebMVC · Spring WebFlux · Spring Security · Spring Data REST · Flyway · SpringDoc OpenAPI 3.0.2 · Lombok · H2
+Spring Boot 4.0.5 · Java 21 toolchain · Spring Data JPA · Spring WebMVC · Spring WebFlux · Spring Security · Spring Data REST · Flyway · SpringDoc OpenAPI 3.0.2 · Lombok · H2
 
 **Not yet added — must be included when implementing:**
 - `spring-kafka` + `spring-kafka-test` (EmbeddedKafka for tests)

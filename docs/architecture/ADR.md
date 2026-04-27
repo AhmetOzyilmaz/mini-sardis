@@ -316,6 +316,25 @@ Notification Service uses `@Slf4j` console log output as mock email/SMS. All not
 
 ---
 
+## ADR-010 — Java 21 Toolchain
+
+**Status:** Accepted  
+**Date:** 2026-04-27
+
+### Context
+The project was initially scaffolded with a Java 17 toolchain. However, the development machine runs JDK 21 and Spring Boot 4.x fully supports Java 21 as its primary LTS target. Java 21 brings virtual threads (Project Loom), pattern matching for `switch`, record patterns, and sequenced collections — features aligned with the existing codebase style.
+
+### Decision
+Upgrade `build.gradle` toolchain from `JavaLanguageVersion.of(17)` to `JavaLanguageVersion.of(21)`. All documentation updated accordingly.
+
+### Consequences
+- (+) Enables virtual threads via `spring.threads.virtual.enabled=true` for future throughput improvement
+- (+) Pattern matching in `switch` expressions reduces boilerplate in domain methods
+- (-) Requires JDK 21+ on all developer machines and CI environments
+- (-) Docker base image must match (current Dockerfile uses `eclipse-temurin:21-jre`)
+
+---
+
 ## ADR-011 — Grace Period over Immediate Suspension on Renewal Failure
 
 **Status:** Accepted  
@@ -372,7 +391,38 @@ The refund amount is **never trusted from the event** — payment-service always
 
 ---
 
-## ADR-013 — Offer Eligibility Evaluated in Application Layer
+## ADR-013 — SOLID Compliance Analysis and Known Technical Debt
+
+**Status:** Accepted  
+**Date:** 2026-04-27
+
+### Context
+A SOLID principles review was conducted after the v2 feature additions. This ADR documents the findings and the resolution for the identified OCP violation.
+
+### Findings
+
+| Principle | Class | Status | Note |
+|---|---|---|---|
+| **SRP** | `CreateSubscriptionService` | Minor debt | Payload serialization (lines 80–101) and result mapping (103–108) are inlined; extracting to a `SubscriptionOutboxPayloadBuilder` would isolate serialization changes |
+| **SRP** | `RenewalScheduler` | Minor debt | Handles renewal AND cancel-at-period-end within same scheduler; acceptable for a single-node scheduler but a separate `CancelAtPeriodEndProcessor` would improve readability |
+| **SRP** | `ProcessPaymentService` (payment-service) | Minor debt | Retry logic (exponential backoff + `Thread.sleep`) is inlined; a `RetryPolicy` abstraction would isolate it |
+| **OCP** | `NotificationTemplate` | **Fixed** | `switch` statement required modification for every new Kafka event type. Replaced with a `Map<String, Function<JsonNode, List<NotificationTemplate>>>` registry; new events are added as new `Map.entry` rows without touching existing logic |
+| **LSP** | `JpaSubscriptionRepositoryAdapter` | Compliant | Faithfully implements all port methods; no substitution violations |
+| **ISP** | All `*RepositoryPort` interfaces | Compliant | Each port is scoped to its aggregate; no fat interfaces |
+| **DIP** | All application services | Compliant | Services depend exclusively on port interfaces; zero direct adapter imports |
+
+### Decision
+- Fix the OCP violation in `NotificationTemplate` by converting `switch` to a Map registry.
+- Accept the three SRP minor debt items as technical debt; they are candidates for future extraction but do not violate layering or testability today.
+
+### Consequences
+- (+) `NotificationTemplate` now supports new Kafka event types without source modification
+- (+) `refund.completed.v1` and `refund.failed.v1` templates are added in the same change
+- (-) SRP debt in service classes is documented but not yet addressed — tracked here for visibility
+
+---
+
+## ADR-015 — Offer Eligibility Evaluated in Application Layer
 
 **Status:** Accepted  
 **Date:** 2026-04-27

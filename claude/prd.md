@@ -1465,7 +1465,7 @@ H2 in-memory veritabanı için demo çalıştırma kolaylığı sağlayan seed d
 | Kategori | Seçim | Gerekçe |
 |----------|-------|---------|
 | Framework | Spring Boot 4.x | Ekosistem, üretim hazırlığı |
-| Dil | Java 17 | LTS, sealed classes, records |
+| Dil | Java 21 | LTS, virtual threads, records, pattern matching |
 | DB | H2 (dev) / PostgreSQL (prod) | Hızlı geliştirme + üretim uyumluluğu |
 | Migration | Flyway | Versiyonlu, deterministik şema yönetimi |
 | Mesajlaşma | Apache Kafka | Fan-out, replay, at-least-once garantisi |
