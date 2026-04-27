@@ -34,3 +34,6 @@ build/
 # IDE — IntelliJ IDEA
 .idea/
 *.iml
+
+# Claude Code — local settings (machine-specific, never commit)
+.claude/settings.local.json
