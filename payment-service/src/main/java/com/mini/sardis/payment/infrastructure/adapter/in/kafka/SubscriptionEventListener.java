@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mini.sardis.payment.application.port.in.ProcessPaymentCommand;
 import com.mini.sardis.payment.application.port.in.ProcessPaymentUseCase;
+import com.mini.sardis.payment.application.port.in.ProcessRefundCommand;
+import com.mini.sardis.payment.application.port.in.ProcessRefundUseCase;
 import com.mini.sardis.payment.domain.value.PaymentMethod;
 import com.mini.sardis.payment.domain.value.PaymentType;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class SubscriptionEventListener {
 
     private final ProcessPaymentUseCase processPaymentUseCase;
+    private final ProcessRefundUseCase processRefundUseCase;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "subscription.created.v1", groupId = "payment-subscription-processor")
@@ -63,6 +66,21 @@ public class SubscriptionEventListener {
                     PaymentType.RENEWAL, paymentMethod));
         } catch (Exception e) {
             log.error("Error processing renewal.requested.v1: {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = "refund.requested.v1", groupId = "payment-refund-processor")
+    public void onRefundRequested(@Payload String payload) {
+        try {
+            JsonNode node = objectMapper.readTree(payload);
+            UUID subscriptionId = UUID.fromString(node.get("subscriptionId").asText());
+            UUID userId = UUID.fromString(node.get("userId").asText());
+            String reason = node.path("reason").asText("user_request");
+
+            log.info("Received refund.requested.v1 for subscriptionId={}", subscriptionId);
+            processRefundUseCase.execute(new ProcessRefundCommand(subscriptionId, userId, reason));
+        } catch (Exception e) {
+            log.error("Error processing refund.requested.v1: {}", e.getMessage(), e);
         }
     }
 

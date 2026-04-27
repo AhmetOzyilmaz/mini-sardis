@@ -8,6 +8,7 @@ import com.mini.sardis.application.port.out.OutboxRepositoryPort;
 import com.mini.sardis.application.port.out.PromoCodeRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionPlanRepositoryPort;
 import com.mini.sardis.application.port.out.SubscriptionRepositoryPort;
+import com.mini.sardis.application.port.out.UserPromoCodeRepositoryPort;
 import com.mini.sardis.application.service.subscription.CreateSubscriptionService;
 import com.mini.sardis.domain.entity.Subscription;
 import com.mini.sardis.domain.entity.SubscriptionPlan;
@@ -34,13 +35,14 @@ class CreateSubscriptionServiceTest {
     @Mock private SubscriptionPlanRepositoryPort planRepo;
     @Mock private OutboxRepositoryPort outboxRepo;
     @Mock private PromoCodeRepositoryPort promoCodeRepo;
+    @Mock private UserPromoCodeRepositoryPort userPromoCodeRepo;
 
     private CreateSubscriptionService service;
 
     @BeforeEach
     void setUp() {
         service = new CreateSubscriptionService(subscriptionRepo, planRepo, outboxRepo,
-                new ObjectMapper(), promoCodeRepo);
+                new ObjectMapper(), promoCodeRepo, userPromoCodeRepo);
     }
 
     @Test

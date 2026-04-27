@@ -10,4 +10,5 @@ public interface PaymentRepositoryPort {
     Payment save(Payment payment);
     Optional<Payment> findByIdempotencyKey(String idempotencyKey);
     List<Payment> findBySubscriptionId(UUID subscriptionId);
+    Optional<Payment> findLatestSuccessBySubscriptionId(UUID subscriptionId);
 }

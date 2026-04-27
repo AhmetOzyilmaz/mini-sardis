@@ -29,6 +29,7 @@ public class SubscriptionController {
     private final CancelSubscriptionUseCase cancelUseCase;
     private final GetSubscriptionUseCase getUseCase;
     private final ReactivateSubscriptionUseCase reactivateUseCase;
+    private final RequestRefundUseCase requestRefundUseCase;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Operation(summary = "Create a new subscription (returns 202 while payment is pending)")
@@ -86,6 +87,17 @@ public class SubscriptionController {
         UUID userId = extractUserId(authHeader);
         SubscriptionResult result = reactivateUseCase.execute(id, userId);
         return ResponseEntity.ok(SubscriptionResponse.from(result));
+    }
+
+    @Operation(summary = "Request a refund for a subscription (202 Accepted — processed asynchronously)")
+    @PostMapping("/{id}/refund")
+    public ResponseEntity<Void> requestRefund(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "user_request") String reason,
+            @RequestHeader("Authorization") String authHeader) {
+        UUID userId = extractUserId(authHeader);
+        requestRefundUseCase.execute(new RequestRefundCommand(id, userId, reason));
+        return ResponseEntity.accepted().build();
     }
 
     private UUID extractUserId(String authHeader) {

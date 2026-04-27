@@ -535,11 +535,242 @@ crypto.subtle.importKey("raw", keyData, { name: "HMAC", hash: "SHA-256" }, false
 | Code | Meaning |
 |---|---|
 | `200 OK` | Successful GET / webhook processed |
-| `201 Created` | Resource created (register, promo code) |
-| `202 Accepted` | Subscription creation accepted (async processing) |
+| `201 Created` | Resource created (register, promo code, offer) |
+| `202 Accepted` | Subscription creation or refund request accepted (async processing) |
 | `204 No Content` | Successful DELETE |
 | `400 Bad Request` | Validation error or unknown idempotency key |
 | `401 Unauthorized` | Missing / invalid token or webhook signature |
 | `403 Forbidden` | Authenticated but insufficient role (needs ADMIN) |
 | `404 Not Found` | Resource does not exist |
-| `409 Conflict` | Duplicate unique value (e.g. promo code already exists) |
+| `409 Conflict` | Duplicate unique value or invalid state transition |
+
+---
+
+## 10. New Features — Subscription Service
+
+### 10.1 Cancel at Period End
+
+Defers cancellation until the end of the current billing period (subscription stays ACTIVE until `nextRenewalDate`):
+
+```bash
+curl -X DELETE "http://localhost:8080/api/v1/subscriptions/$SUBS_ID?cancelAtPeriodEnd=true&reason=downgrade" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `204 No Content`
+
+> To cancel immediately (default), omit `cancelAtPeriodEnd` or set it to `false`.
+
+---
+
+### 10.2 Reactivate Subscription
+
+Reactivates a `SUSPENDED` or `GRACE_PERIOD` subscription:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/subscriptions/$SUBS_ID/reactivate \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `200 OK`
+```json
+{
+  "id": "...",
+  "status": "ACTIVE",
+  "gracePeriodEndDate": null
+}
+```
+
+---
+
+### 10.3 Request Refund
+
+Initiates an async refund for a subscription (processed via Kafka saga):
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/subscriptions/$SUBS_ID/refund?reason=unsatisfied" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `202 Accepted` — no body; check `refund.completed.v1` notification or payment-service logs.
+
+---
+
+### 10.4 Transaction History — By Subscription
+
+All lifecycle events recorded for a specific subscription:
+
+```bash
+curl -X GET http://localhost:8080/api/v1/subscriptions/$SUBS_ID/transactions \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "eventId": "...",
+    "subscriptionId": "...",
+    "eventType": "subscription.created.v1",
+    "payloadSummary": "{\"subscriptionId\":\"...\",\"planName\":\"Basic\",...}",
+    "occurredAt": "2026-04-27T10:00:00"
+  }
+]
+```
+
+---
+
+### 10.5 Transaction History — My Subscriptions
+
+All subscription events across all of the authenticated user's subscriptions:
+
+```bash
+curl -X GET http://localhost:8080/api/v1/transactions/my \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `200 OK` — same structure as 10.4
+
+---
+
+### 10.6 Assign Promo Code to Users (Admin)
+
+Assigns a promo code to one or more specific users:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/admin/promo-codes/SAVE10PCT/assign \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "userIds": [
+      "550e8400-e29b-41d4-a716-446655440001",
+      "550e8400-e29b-41d4-a716-446655440002"
+    ]
+  }'
+```
+
+**Response:** `200 OK` — no body
+
+---
+
+### 10.7 My Assigned Promo Codes
+
+Lists all promo codes assigned to the authenticated user:
+
+```bash
+curl -X GET http://localhost:8080/api/v1/my-promo-codes \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "...",
+    "userId": "...",
+    "code": "SAVE10PCT",
+    "assignedAt": "2026-04-27T09:00:00",
+    "used": false,
+    "usedAt": null
+  }
+]
+```
+
+---
+
+### 10.8 Get Eligible Offers
+
+Returns personalized offers the authenticated user is eligible for:
+
+```bash
+curl -X GET http://localhost:8080/api/v1/offers \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "...",
+    "name": "Spring Upgrade Deal",
+    "description": "Upgrade to Premium at 20% off",
+    "planId": "a0000001-0000-0000-0000-000000000002",
+    "promoCodeId": "...",
+    "targetType": "ALL_USERS",
+    "validFrom": "2026-04-01T00:00:00",
+    "validTo": "2026-06-30T23:59:59",
+    "active": true,
+    "createdAt": "2026-04-01T08:00:00"
+  }
+]
+```
+
+---
+
+### 10.9 Get Offer by ID
+
+```bash
+curl -X GET http://localhost:8080/api/v1/offers/$OFFER_ID \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+**Response:** `200 OK` — single offer object
+
+---
+
+### 10.10 Create Offer (Admin)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/admin/offers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "name": "Spring Upgrade Deal",
+    "description": "Upgrade to Premium at 20% off",
+    "planId": "a0000001-0000-0000-0000-000000000002",
+    "promoCodeId": null,
+    "targetType": "ALL_USERS",
+    "validFrom": "2026-04-01T00:00:00",
+    "validTo": "2026-06-30T23:59:59"
+  }'
+```
+
+**Response:** `201 Created`
+
+> `targetType` values: `ALL_USERS`, `SPECIFIC_USER` (requires `targetUserId`), `PLAN_UPGRADE` (requires `targetPlanId`).
+
+---
+
+## 11. End-to-End Flow — Grace Period & Refund
+
+Demonstrates renewal failure → grace period → refund request:
+
+```bash
+# 1. Login
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user1@demo.com","password":"Password1"}' | jq -r '.token')
+
+# 2. Create + activate subscription (see Section 7)
+SUBS_ID="<activated-subscription-id>"
+
+# 3. Simulate renewal payment failure
+#    (wait for RenewalScheduler or trigger by setting nextRenewalDate to today in DB)
+#    After failure, subscription status becomes GRACE_PERIOD
+
+# 4. Check status — should be GRACE_PERIOD
+curl -s http://localhost:8080/api/v1/subscriptions/$SUBS_ID | jq .status
+
+# 5. Request refund while in GRACE_PERIOD
+curl -X POST "http://localhost:8080/api/v1/subscriptions/$SUBS_ID/refund?reason=renewal_failed" \
+  -H "Authorization: Bearer $TOKEN"
+# → 202 Accepted; payment-service processes refund.requested.v1 async
+
+# 6. Check transaction history
+curl -s http://localhost:8080/api/v1/subscriptions/$SUBS_ID/transactions \
+  -H "Authorization: Bearer $TOKEN" | jq .
+
+# 7. Reactivate after resolving payment issue
+curl -X POST http://localhost:8080/api/v1/subscriptions/$SUBS_ID/reactivate \
+  -H "Authorization: Bearer $TOKEN"
+```

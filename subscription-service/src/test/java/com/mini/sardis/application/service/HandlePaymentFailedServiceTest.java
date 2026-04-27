@@ -53,7 +53,7 @@ class HandlePaymentFailedServiceTest {
     }
 
     @Test
-    void renewalPaymentFailure_suspendsActiveSubscription() {
+    void renewalPaymentFailure_entersGracePeriodForActiveSubscription() {
         UUID subscriptionId = UUID.randomUUID();
         Subscription sub = activeSubscription(subscriptionId);
 
@@ -62,11 +62,12 @@ class HandlePaymentFailedServiceTest {
 
         service.execute(subscriptionId, "RENEWAL", "card_declined");
 
-        assertThat(sub.getStatus()).isEqualTo(SubscriptionStatus.SUSPENDED);
+        assertThat(sub.getStatus()).isEqualTo(SubscriptionStatus.GRACE_PERIOD);
+        assertThat(sub.getGracePeriodEndDate()).isNotNull();
 
         var captor = ArgumentCaptor.forClass(com.mini.sardis.domain.entity.OutboxEvent.class);
         verify(outboxRepo).save(captor.capture());
-        assertThat(captor.getValue().getEventType()).isEqualTo("subscription.suspended.v1");
+        assertThat(captor.getValue().getEventType()).isEqualTo("subscription.grace_period.v1");
     }
 
     @Test

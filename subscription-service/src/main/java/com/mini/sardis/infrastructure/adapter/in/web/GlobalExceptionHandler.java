@@ -1,6 +1,7 @@
 package com.mini.sardis.infrastructure.adapter.in.web;
 
 import com.mini.sardis.application.exception.*;
+import com.mini.sardis.application.exception.OfferNotFoundException;
 import com.mini.sardis.common.exception.GlobalExceptionHandlerBase;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -66,6 +67,14 @@ public class GlobalExceptionHandler extends GlobalExceptionHandlerBase {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         pd.setType(URI.create(BASE + "invalid-promo-code"));
         pd.setTitle("Invalid Promo Code");
+        return pd;
+    }
+
+    @ExceptionHandler(OfferNotFoundException.class)
+    public ProblemDetail handleOfferNotFound(OfferNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setType(URI.create(BASE + "offer-not-found"));
+        pd.setTitle("Offer Not Found");
         return pd;
     }
 }

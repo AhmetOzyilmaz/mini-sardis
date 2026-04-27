@@ -313,3 +313,86 @@ Notification Service uses `@Slf4j` console log output as mock email/SMS. All not
 - (+) `notification_logs` provides audit trail for test assertions
 - (-) Not a production email solution — explicitly noted as out of scope
 - **Future path:** `EmailAdapter implements NotificationPort` → inject via `@Primary` or Spring profile
+
+---
+
+## ADR-011 — Grace Period over Immediate Suspension on Renewal Failure
+
+**Status:** Accepted  
+**Date:** 2026-04-27
+
+### Context
+When a renewal payment fails, the previous implementation immediately suspended the subscription. This is too aggressive for a telecom product: transient payment failures (bank timeout, temporary card block) are common, and users expect a window to resolve payment issues before losing service.
+
+### Decision
+On renewal payment failure (`payment.failed.v1` with `paymentType=RENEWAL`), transition the subscription to `GRACE_PERIOD` status instead of `SUSPENDED`. The grace window is configurable via `app.grace-period.days` (default 3). A daily scheduler (`GracePeriodExpiryScheduler`) cancels subscriptions whose grace period has expired.
+
+### Rationale
+| Driver | Grace Period Benefit |
+|--------|---------------------|
+| Churn reduction | Transient payment failures do not immediately cancel service |
+| Telecom industry norm | Mobile and broadband operators universally apply grace periods |
+| Operator visibility | `subscription.grace_period.v1` event allows targeted outreach |
+| Configurability | `app.grace-period.days` tunable per environment without code change |
+
+### Consequences
+- (+) `GRACE_PERIOD` is an additive status value — consumers that ignore unknown statuses are unaffected
+- (+) `GracePeriodExpiryScheduler` reuses the cancellation path (`subscription.cancelled.v1`), so notification and downstream consumers require no new logic
+- (-) `GRACE_PERIOD` status must be documented as a breaking addition for consumers that switch-exhaust on `SubscriptionStatus`
+- (-) `GracePeriodExpiryScheduler` and `RenewalScheduler` share the same single-node gap — production should add ShedLock
+
+---
+
+## ADR-012 — Refund via Saga Choreography (No Direct HTTP)
+
+**Status:** Accepted  
+**Date:** 2026-04-27
+
+### Context
+Refund initiation must live in subscription-service (it holds the JWT auth boundary and subscription ownership). The actual payment reversal must execute in payment-service (it holds the payment records). A synchronous REST call from subscription-service to payment-service would couple the two services at runtime and violate the principle established in ADR-004.
+
+### Decision
+Refund is a two-step saga:
+1. Subscription-service validates ownership and eligibility, then writes `refund.requested.v1` to the outbox.
+2. Payment-service consumes `refund.requested.v1`, looks up the authoritative payment amount from its own DB, executes the mock refund, and publishes `refund.completed.v1` or `refund.failed.v1`.
+
+The refund amount is **never trusted from the event** — payment-service always reads `findLatestSuccessBySubscriptionId` from its own DB.
+
+### Rationale
+- Consistent with ADR-004 (Saga Choreography) — no new synchronous service-to-service calls
+- Keeps payment-service free of JWT auth infrastructure
+- Amount authoritative in payment-service DB prevents amount tampering via manipulated events
+- Subscription-service returns `202 Accepted` immediately; UI polls subscription or checks notification log
+
+### Consequences
+- (+) No new HTTP dependency between services — payment-service stays publicly inaccessible
+- (+) Refund path is auditable via outbox events (`refund.requested.v1`, `refund.completed.v1`)
+- (-) Three new Kafka topics: `refund.requested.v1`, `refund.completed.v1`, `refund.failed.v1`
+- (-) No synchronous refund status in the `POST /refund` response — client must poll or use notifications
+
+---
+
+## ADR-013 — Offer Eligibility Evaluated in Application Layer
+
+**Status:** Accepted  
+**Date:** 2026-04-27
+
+### Context
+The `Offer` aggregate has three targeting modes: `ALL_USERS`, `SPECIFIC_USER`, and `PLAN_UPGRADE`. Eligibility evaluation could live in the SQL `WHERE` clause (pushed to DB) or in Java after loading candidate offers (in-memory filtering in the application layer).
+
+### Decision
+`Offer.isEligibleFor(userId, currentPlanId)` is a domain method evaluated in Java. `GetOffersService` loads two candidate sets from the DB — `findAllActive()` (ALL_USERS offers) and `findActiveByTargetUserId(userId)` (SPECIFIC_USER offers) — then filters in memory.
+
+### Rationale
+| Factor | Application-layer filtering |
+|--------|----------------------------|
+| Domain purity | Eligibility rules live in the domain, not in JPA queries |
+| Offer catalog size | Typical telecom offer catalogs are small (< 100 active offers) |
+| Date window check | `validFrom`/`validTo` comparison is trivial in Java; pushing it to JPQL adds complexity |
+| Evolvability | Adding a new `OfferTargetType` requires only a new `case` branch, not a query rewrite |
+
+### Consequences
+- (+) Eligibility rules are unit-testable without a Spring context or DB
+- (+) `Offer.isEligibleFor()` is the single source of truth — no risk of SQL and Java logic diverging
+- (-) If the active offer catalog grows beyond ~1000 rows, full-table scans on `findAllActive()` become expensive — mitigate by pushing ALL_USERS filtering to indexed `active` column (already indexed as `idx_offers_active`)
+- **Migration path:** If catalog grows large, add `targetType` to `findAllActive` query and index `(active, target_type)` — no domain model change required

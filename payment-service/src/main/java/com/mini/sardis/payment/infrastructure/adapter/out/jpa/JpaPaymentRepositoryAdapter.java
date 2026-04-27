@@ -30,6 +30,11 @@ public class JpaPaymentRepositoryAdapter implements PaymentRepositoryPort {
         return jpaRepo.findBySubscriptionId(subscriptionId).stream().map(this::toDomain).toList();
     }
 
+    @Override
+    public Optional<Payment> findLatestSuccessBySubscriptionId(UUID subscriptionId) {
+        return jpaRepo.findLatestSuccessBySubscriptionId(subscriptionId).map(this::toDomain);
+    }
+
     private PaymentJpaEntity toJpa(Payment p) {
         return PaymentJpaEntity.builder()
                 .id(p.getId())

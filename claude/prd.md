@@ -1630,4 +1630,146 @@ Payment Service geriye uyumluluk için: `node.has("finalAmount")` kontrolü yapa
 >
 > Bu çalışma, gerçek üretim sistemlerine benzer belirsizlikler ve kısıtlar içermektedir. Adaydan, tüm problemleri eksiksiz çözmesi değil; **doğru varsayımlar yapması, riskleri fark etmesi ve bilinçli teknik kararlar alması** beklenmektedir.
 >
+
+---
+
+## 19. Gelişmiş Abonelik Özellikleri / Advanced Subscription Features
+
+> **Versiyon / Version:** 2.0 | **Tarih / Date:** 2026-04-27
+
+Bu bölüm, telekominikasyon endüstrisi standartlarına uygun 6 yeni özelliği tanımlar.  
+This section defines 6 new features aligned with telecom industry standards.
+
+---
+
+### 19.1 Dönem Sonu İptal / Cancel at Period End
+
+**TR —** Kullanıcı, aboneliğini anında iptal etmek yerine mevcut fatura döneminin sonuna kadar erteleyebilir. `cancelAtPeriodEnd=true` ile DELETE isteği gönderildiğinde abonelik ACTIVE kalır; `RenewalScheduler` `nextRenewalDate` geldiğinde iptal işlemini tamamlar ve `subscription.cancelled.v1` yayımlar.
+
+**EN —** Users can defer cancellation to the end of the billing period instead of immediate cancellation. Sending `DELETE /subscriptions/{id}?cancelAtPeriodEnd=true` keeps the subscription ACTIVE; `RenewalScheduler` completes cancellation on `nextRenewalDate` and publishes `subscription.cancelled.v1`.
+
+**Kullanıcı Hikayeleri / User Stories:**
+- Kullanıcı olarak, aboneliğimi hemen iptal etmek istemiyorum; ödediğim sürenin sonuna kadar kullanmak istiyorum.
+- Admin olarak, kullanıcı kayıplarını azaltmak için esnek iptal seçeneği sunmak istiyorum.
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- `DELETE /subscriptions/{id}?cancelAtPeriodEnd=true` → `204 No Content`; status stays `ACTIVE`
+- `cancelAtPeriodEnd=true` olan abonelikler `nextRenewalDate` geldiğinde otomatik iptal edilir
+- `subscription.cancelled.v1` olayı yayımlanır ve bildirim gönderilir
+- `cancelAtPeriodEnd=false` (default) ile gönderilen DELETE anlık iptal yapar
+
+**Kapsam Dışı / Out of Scope:** Kısmi para iadesi, dönem değişikliği.
+
+---
+
+### 19.2 Abonelik Yeniden Aktifleştirme / Reactivate Subscription
+
+**TR —** `SUSPENDED` veya `GRACE_PERIOD` durumundaki abonelikler `POST /subscriptions/{id}/reactivate` ile yeniden aktif edilebilir. Bu işlem `ACTIVE` statüsüne geçiş yapar ve `gracePeriodEndDate` temizlenir.
+
+**EN —** Subscriptions in `SUSPENDED` or `GRACE_PERIOD` status can be reactivated via `POST /subscriptions/{id}/reactivate`. Transitions to `ACTIVE` and clears `gracePeriodEndDate`.
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- Yalnızca aboneliğin sahibi yeniden aktifleştirebilir (ownership validation)
+- `CANCELLED` abonelik yeniden aktifleştirilemez → `409 Conflict`
+- Başarılı aktivasyon `subscription.activated.v1` yayımlar
+
+---
+
+### 19.3 Ödemesiz Dönem (Grace Period) / Grace Period on Renewal Failure
+
+**TR —** Yenileme ödemesi başarısız olduğunda abonelik anında askıya alınmaz; `GRACE_PERIOD` statüsüne geçer. Yapılandırılabilir gün sayısı (`app.grace-period.days`, varsayılan 3) sonunda ödeme hala yapılmamışsa abonelik otomatik iptal edilir.
+
+**EN —** On renewal payment failure the subscription does not immediately suspend; it enters `GRACE_PERIOD` status. After a configurable number of days (`app.grace-period.days`, default 3) without payment, it is automatically cancelled by `GracePeriodExpiryScheduler`.
+
+**Kullanıcı Hikayeleri / User Stories:**
+- Kullanıcı olarak, geçici bir ödeme sorunu nedeniyle hizmetimin anında kesilmesini istemiyorum.
+- Operasyon ekibi olarak, grace period'daki kullanıcılara hedefli bildirim göndermek istiyorum.
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- `payment.failed.v1` (RENEWAL tipi) → status `GRACE_PERIOD`, `gracePeriodEndDate` = `now + grace days`
+- `subscription.grace_period.v1` Kafka eventi yayımlanır; bildirim servisi email/SMS gönderir
+- Grace period dolduğunda `GracePeriodExpiryScheduler` aboneliği iptal eder
+- Grace period içinde kullanıcı ödeme yapıp yeniden aktifleştirebilir
+
+**Yeni Kafka Eventi:** `subscription.grace_period.v1`
+```json
+{ "subscriptionId": "uuid", "userId": "uuid", "gracePeriodEndDate": "2026-04-30", "status": "GRACE_PERIOD" }
+```
+
+---
+
+### 19.4 Hedefli Promosyon Kodu Atama / Targeted Promo Code Assignment
+
+**TR —** Admin, belirli kullanıcılara promo kodu atayabilir. Kullanıcılar kendi kodlarını `/my-promo-codes` endpoint'inden görebilir. Abonelik oluştururken atanan kod kullanılırsa `user_promo_codes.used` alanı güncellenir.
+
+**EN —** Admins can assign promo codes to specific users. Users see their assigned codes at `GET /my-promo-codes`. When an assigned code is used during subscription creation, `user_promo_codes.used` is updated.
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- `POST /admin/promo-codes/{code}/assign` toplu atama destekler (birden fazla userId)
+- Aynı kullanıcıya aynı kod ikinci kez atanamaz (unique constraint)
+- Atanmamış (genel) promo kodları hala çalışır — geriye dönük uyumluluk korunur
+- `GET /my-promo-codes` sadece authenticated kullanıcının kodlarını döner
+
+**Yetki / Auth:** Atama → `ROLE_ADMIN`; listeleme → `ROLE_USER`
+
+---
+
+### 19.5 İşlem Geçmişi / Transaction History
+
+**TR —** Mevcut `outbox_events` tablosu her abonelik olayını (`subscription.created.v1`, `payment.completed.v1`, vb.) kaydeder. Bu tablo üzerinden abonelik ve kullanıcı bazında işlem geçmişi sorgulanabilir.
+
+**EN —** The existing `outbox_events` table records every subscription lifecycle event. Transaction history endpoints query this table — no new DB table needed.
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- `GET /subscriptions/{id}/transactions` → belirli aboneliğe ait tüm olaylar (newest first)
+- `GET /transactions/my` → authenticated kullanıcının tüm aboneliklerine ait olaylar
+- `payloadSummary` alanı 200 karakterle kısıtlanır (PII koruma)
+- Boş abonelik listesi için güvenli yanıt (empty list guard)
+
+---
+
+### 19.6 Kişiselleştirilmiş Teklifler / Personalized Offers
+
+**TR —** Admin, belirli kullanıcılara veya plan yükseltme senaryolarına özel teklifler oluşturabilir. Kullanıcı `/offers` endpoint'inden kendine uygun teklifleri görür. Teklif uygunluğu Java uygulama katmanında değerlendirilir (ADR-013).
+
+**EN —** Admins create targeted offers for specific users or plan-upgrade scenarios. Users see eligible offers at `GET /offers`. Eligibility is evaluated in the application layer in Java (ADR-013).
+
+**Hedef Türleri / Target Types:**
+| Değer / Value | Kapsam / Scope |
+|---|---|
+| `ALL_USERS` | Tüm kullanıcılar / All users |
+| `SPECIFIC_USER` | Belirli bir kullanıcı / Specific user (targetUserId) |
+| `PLAN_UPGRADE` | Belirli bir plandan yükseltme / Upgrade from specific plan (targetPlanId) |
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- `GET /offers` → kullanıcının uygun tekliflerini döner
+- `POST /admin/offers` → yeni teklif oluşturur (`ROLE_ADMIN`)
+- `validFrom` / `validTo` tarih aralığı dışındaki teklifler filtrelenir
+- `active=false` teklifler hiçbir listede görünmez
+
+---
+
+### 19.7 Para İadesi Saga'sı / Refund Saga
+
+**TR —** Kullanıcı, aktif/askıdaki/grace period aboneliği için `POST /subscriptions/{id}/refund` ile iade talep edebilir. İstek, Kafka üzerinden payment-service'e iletilir. Payment-service kendi DB'sindeki son başarılı ödemeyi baz alarak iade işlemini gerçekleştirir (tutar olaya güvenilmez).
+
+**EN —** Users request a refund via `POST /subscriptions/{id}/refund`. The request is forwarded to payment-service via Kafka saga. Payment-service looks up the authoritative amount from its own DB (never trusts the event amount).
+
+**Saga Adımları / Saga Steps:**
+1. Subscription-service: ownership + status validation → `refund.requested.v1` to outbox
+2. Payment-service: listens → finds latest SUCCESS payment → creates `Refund` → publishes `refund.completed.v1` or `refund.failed.v1`
+3. Subscription-service: listens → logs result
+
+**Kabul Kriterleri / Acceptance Criteria:**
+- `POST /subscriptions/{id}/refund` → `202 Accepted` (async)
+- Yalnızca `ACTIVE`, `SUSPENDED`, `GRACE_PERIOD` abonelikler iade alabilir
+- Aynı abonelik için duplicate iade isteği idempotent olarak işlenir
+- `refund.completed.v1` → bildirim servisi email gönderir
+
+**Kapsam Dışı / Out of Scope:** Kısmi iade, çoklu iade.
+
+**Yeni Kafka Eventleri:**
+- `refund.requested.v1` (subscription → payment)
+- `refund.completed.v1` (payment → subscription + notification)
+- `refund.failed.v1` (payment → subscription)
 > This case study intentionally mirrors real-world ambiguity. The candidate is expected not to solve everything perfectly, but to **make sound assumptions, identify risks, and take deliberate technical decisions**.
